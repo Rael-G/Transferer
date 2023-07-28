@@ -398,5 +398,6 @@ FodyWeavers.xsd
 *.sln.iml
 
 #Custom
-Tmp/
+Storage/Db/* 
+Storage/Files/*
 
