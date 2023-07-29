@@ -398,7 +398,7 @@ FodyWeavers.xsd
 *.sln.iml
 
 #Custom
-Storage/Db/* 
-Storage/Files/*
+Api/Storage/Db/* 
+Api/Storage/Files/*
 .vscode/
 
