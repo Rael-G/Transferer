@@ -16,18 +16,20 @@ namespace Api.Data.Repositories
             _path = @"C:\Users\israe\OneDrive\Documentos\Projetos\C#\Transfero\Api\Storage\Files";
         }
 
-        public Stream GetByPath(string fullPath)
+        public Stream? GetByPath(string fullPath)
         {
-            
-            var fileStream = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            FileStream? file;
 
-            //Stream stream = new MemoryStream();
-            //using (FileStream fileStream = new FileStream(fullPath, FileMode.Open)) 
-            //{
-            //    fileStream.CopyTo(stream);
-            //}
+            if (File.Exists(fullPath))
+            {
+                file = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            }
+            else
+            {
+                file = null;
+            }
 
-            return fileStream;
+            return file;
         }
 
         public string Store(Stream file)
@@ -40,6 +42,18 @@ namespace Api.Data.Repositories
             }
 
             return fullPath;
+        }
+
+        public bool Delete(string path)
+        {
+            try
+            {
+                File.Delete(path);
+            }
+            catch
+            { return false; }
+
+            return true;
         }
     }
 }

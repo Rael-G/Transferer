@@ -6,6 +6,7 @@ namespace Api.Data.Interfaces
     {
         //Store a file and return its path or url
         string Store(Stream file);
-        Stream GetByPath(string path);
+        Stream? GetByPath(string path);
+        bool Delete(string path);
     }
 }
