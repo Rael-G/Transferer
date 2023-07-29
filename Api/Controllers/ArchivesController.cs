@@ -1,6 +1,7 @@
 ﻿using Api.Data.Interfaces;
 using Api.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.FileProviders;
 using System.ComponentModel;
 using System.Reflection.Metadata;
 
@@ -38,9 +39,11 @@ namespace Api.Controllers
         }
 
         [HttpGet("{id}")]
-        public IActionResult Download(int id) 
+        public async Task<IActionResult> Download(int id) 
         {
-            return new FileStreamResult(new MemoryStream(), "");
+            var archive = await _archiveRepository.GetByIdAsync(id);
+            var stream = _fileStorage.GetByPath(archive.Path);
+            return File(stream, archive.ContentType, archive.FileName);
         }
     }
 }

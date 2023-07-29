@@ -13,9 +13,9 @@ namespace Api.Data.Repositories
             _context = context;
         }
 
-        public Task<Archive> GetById(int id)
+        public async Task<Archive> GetByIdAsync(int id)
         {
-            throw new NotImplementedException();
+            return _context.Archives.FirstOrDefault<Archive>(a => a.Id == id);
         }
 
         public async Task<Archive> SaveAsync(Archive archive)

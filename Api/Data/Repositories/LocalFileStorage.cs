@@ -1,4 +1,5 @@
 ﻿using Api.Data.Interfaces;
+using Api.Models;
 
 namespace Api.Data.Repositories
 {
@@ -14,7 +15,21 @@ namespace Api.Data.Repositories
         {
             _path = @"C:\Users\israe\OneDrive\Documentos\Projetos\C#\Transfero\Api\Storage\Files";
         }
-        
+
+        public Stream GetByPath(string fullPath)
+        {
+            
+            var fileStream = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+
+            //Stream stream = new MemoryStream();
+            //using (FileStream fileStream = new FileStream(fullPath, FileMode.Open)) 
+            //{
+            //    fileStream.CopyTo(stream);
+            //}
+
+            return fileStream;
+        }
+
         public string Store(Stream file)
         {
             Guid fileName = Guid.NewGuid();
