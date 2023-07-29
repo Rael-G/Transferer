@@ -1,4 +1,6 @@
-using Api.Data;
+using Api.Data.Contexts;
+using Api.Data.Interfaces;
+using Api.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,6 +16,7 @@ builder.Services.AddDbContext<TransferoDbContext>(options =>
     options.UseSqlite($"Data Source={Directory.GetCurrentDirectory()}\\Storage\\Db\\Transfero.db;"));
 
 builder.Services.AddScoped<IArchiveRepository, ArchiveRepository>();
+builder.Services.AddScoped<IFileStorage, LocalFileStorage>();
 
 var app = builder.Build();
 

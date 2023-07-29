@@ -1,4 +1,5 @@
-﻿using Api.Data;
+﻿using Api.Data.Interfaces;
+using Api.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel;
 using System.Reflection.Metadata;
@@ -9,19 +10,31 @@ namespace Api.Controllers
     [Route("api/[Controller]")]
     public class ArchivesController : ControllerBase
     {
+        //TODO
+        //Implementar autorização e criptografia
         private readonly IArchiveRepository _archiveRepository;
-        private readonly string _path;
+        private readonly IFileStorage _fileStorage;
 
-        public ArchivesController(IArchiveRepository repository)
+        public ArchivesController(IArchiveRepository repository, IFileStorage storage)
         {
             _archiveRepository = repository;
-            _path = $"{AppDomain.CurrentDomain.BaseDirectory}\\Storage\\Files\\";
+            _fileStorage = storage;
         }
 
         [HttpPost]
-        public IActionResult Upload(IFormFile file)
+        public async Task<IActionResult> Upload(IFormFile file)
         {
-            return Ok();
+            
+            Stream stream = file.OpenReadStream();
+            string filePath = _fileStorage.Store(stream);
+
+            var archive = new Archive { 
+                Name = file.Name, FileName = file.FileName, ContentType = file.ContentType, 
+                Length = file.Length, Path = filePath };
+
+            var archived = await _archiveRepository.SaveAsync(archive);
+
+            return CreatedAtAction(nameof(Download), new { archived.Id }, archived);
         }
 
         [HttpGet("{id}")]
