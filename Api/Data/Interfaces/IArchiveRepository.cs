@@ -4,9 +4,10 @@ namespace Api.Data.Interfaces
 {
     public interface IArchiveRepository
     {
-        Task<Archive> SaveAsync(Archive archive);
-        Task<Archive?> GetByIdAsync(int id);
         Task<List<Archive>> GetAllAsync();
+        Task<Archive?> GetByIdAsync(int id);
+        Task<List<Archive>> GetByNameAsync(string name);
+        Task<Archive> SaveAsync(Archive archive);
         Task<bool> DeleteAsync(int id);
     }
 }

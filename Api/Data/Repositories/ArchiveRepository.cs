@@ -2,6 +2,7 @@
 using Api.Data.Interfaces;
 using Api.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Text.RegularExpressions;
 
 namespace Api.Data.Repositories
 {
@@ -23,6 +24,13 @@ namespace Api.Data.Repositories
         {
             var file = await _context.Archives.FirstOrDefaultAsync(a => a.Id == id);
             return file;
+        }
+
+        public async Task<List<Archive>> GetByNameAsync(string name)
+        {
+            return await _context.Archives
+                .Where(a => Regex.IsMatch(a.FileName, name))
+                .ToListAsync();
         }
 
         public async Task<Archive> SaveAsync(Archive archive)

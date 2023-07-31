@@ -12,11 +12,10 @@ using System.Xml.Linq;
 namespace Api.Controllers
 {
     [ApiController]
-    [Route("api/[Controller]")]
+    [Route("[controller]")]
     public class ArchivesController : ControllerBase
     {
         //TODO
-        //procura por nome do arquivo
         //Download de multiplus arquivos devolvendo um .zip
 
         //TODO EXTERNO
@@ -36,7 +35,7 @@ namespace Api.Controllers
             _fileStorage = storage;
         }
 
-        [HttpGet]
+        [HttpGet("list")]
         public async Task<IActionResult> ListAll()
         {
             var archives = await _archiveRepository.GetAllAsync();
@@ -44,7 +43,27 @@ namespace Api.Controllers
             return Ok(archives);
         }
 
-        [HttpPost]
+        [HttpGet("search/{name}")]
+        public async Task<IActionResult> Search(string name)
+        {
+            var archives = await _archiveRepository.GetByNameAsync(name);
+
+            return Ok(archives);
+        }
+
+        [HttpGet("download/{id}")]
+        public async Task<IActionResult> Download(int id)
+        {
+            var archive = await _archiveRepository.GetByIdAsync(id);
+            if (archive == null) { return NotFound(); }
+
+            var stream = _fileStorage.GetByPath(archive.Path);
+            if (stream == null) { return NotFound(); }
+
+            return File(stream, archive.ContentType, archive.FileName);
+        }
+
+        [HttpPost("upload")]
         public async Task<IActionResult> Upload(IEnumerable<IFormFile> files)
         {
             List<Archive> archives = new();
@@ -58,19 +77,7 @@ namespace Api.Controllers
            return Ok(archives);
         }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> Download(int id)
-        {
-            var archive = await _archiveRepository.GetByIdAsync(id);
-            if (archive == null) { return NotFound(); }
-
-            var stream = _fileStorage.GetByPath(archive.Path);
-            if (stream == null) { return NotFound(); }
-
-            return File(stream, archive.ContentType, archive.FileName);
-        }
-
-        [HttpDelete]
+        [HttpDelete("delete/{id}")]
         public async Task<IActionResult> Delete(int id)
         {
             var archive = await _archiveRepository.GetByIdAsync(id);
