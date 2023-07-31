@@ -6,8 +6,10 @@ namespace Api.Data.Interfaces
     {
         Task<List<Archive>> GetAllAsync();
         Task<Archive?> GetByIdAsync(int id);
-        Task<List<Archive>> GetByNameAsync(string name);
+        Task<List<Archive>?> GetByIdsAsync(int[] ids);
+        Task<List<Archive>?> GetByNameAsync(string name);
         Task<Archive> SaveAsync(Archive archive);
         Task<bool> DeleteAsync(int id);
+        
     }
 }

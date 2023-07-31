@@ -26,11 +26,22 @@ namespace Api.Data.Repositories
             return file;
         }
 
-        public async Task<List<Archive>> GetByNameAsync(string name)
+        public async Task<List<Archive>?> GetByIdsAsync(int[] ids)
         {
-            return await _context.Archives
+            var archives = await _context.Archives
+                .Where(a => ids.Contains(a.Id ?? 0))
+                .ToListAsync();
+
+            return archives;
+        }
+
+        public async Task<List<Archive>?> GetByNameAsync(string name)
+        {
+             var archives = await _context.Archives
                 .Where(a => Regex.IsMatch(a.FileName, name))
                 .ToListAsync();
+
+            return archives;
         }
 
         public async Task<Archive> SaveAsync(Archive archive)
