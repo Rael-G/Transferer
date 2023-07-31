@@ -1,6 +1,7 @@
 ﻿using Api.Data.Interfaces;
 using Api.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using Microsoft.Extensions.FileProviders;
 using System.ComponentModel;
 using System.Net.Mime;
@@ -15,15 +16,16 @@ namespace Api.Controllers
     public class ArchivesController : ControllerBase
     {
         //TODO
-        //Implementar autorização e criptografia
-        //Upload de multiplus arquivos
+        //procura por nome do arquivo
         //Download de multiplus arquivos devolvendo um .zip
-        //deletar arquivos
-        //Organização em Pastas?
-        //verificar virus?
+
+        //TODO EXTERNO
+        //Testes unitarios e integração
+        //Implementar autorização e criptografia
+        //Cocumentação swagger e readme.md
+        //Verificação de virus nos arquivos
         //Integração com Armazenamento em Nuvem?
-        //documentação swagger e readme.md
-        //testes unitarios e integração
+        //Organização em Pastas?
 
         private readonly IArchiveRepository _archiveRepository;
         private readonly IFileStorage _fileStorage;
@@ -43,24 +45,25 @@ namespace Api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Upload(IFormFile file)
+        public async Task<IActionResult> Upload(IEnumerable<IFormFile> files)
         {
-            
-            Stream stream = file.OpenReadStream();
-            string filePath = _fileStorage.Store(stream);
-
-            var archive = new Archive(file.FileName, file.ContentType, file.Length, filePath);
-            var archived = await _archiveRepository.SaveAsync(archive);
-
-            return CreatedAtAction(nameof(Download), new { archived.Id }, archived);
+            List<Archive> archives = new();
+            foreach (var file in files)
+            {
+                Stream stream = file.OpenReadStream();
+                string filePath = _fileStorage.Store(stream);
+                var archive = new Archive(file.FileName, file.ContentType, file.Length, filePath);
+                archives.Add(await _archiveRepository.SaveAsync(archive));
+            }
+           return Ok(archives);
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> Download(int id) 
+        public async Task<IActionResult> Download(int id)
         {
             var archive = await _archiveRepository.GetByIdAsync(id);
             if (archive == null) { return NotFound(); }
-            
+
             var stream = _fileStorage.GetByPath(archive.Path);
             if (stream == null) { return NotFound(); }
 

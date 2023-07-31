@@ -18,18 +18,12 @@ namespace Api.Data.Repositories
 
         public Stream? GetByPath(string fullPath)
         {
-            FileStream? file;
-
             if (File.Exists(fullPath))
             {
-                file = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                byte[] file = File.ReadAllBytes(fullPath);
+                return new MemoryStream(file);
             }
-            else
-            {
-                file = null;
-            }
-
-            return file;
+            return null;
         }
 
         public string Store(Stream file)
