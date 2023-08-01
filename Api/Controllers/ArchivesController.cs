@@ -24,7 +24,7 @@ namespace Api.Controllers
         //Cocumentação swagger e readme.md
         //Verificação de virus nos arquivos
         //Integração com Armazenamento em Nuvem?
-        //Organização em Pastas?
+        //Organização em Pastas (VFS: virtual file system)
 
         private readonly IArchiveRepository _archiveRepository;
         private readonly IFileStorage _fileStorage;
@@ -68,7 +68,7 @@ namespace Api.Controllers
         //TODO
         //Avisar quais arquivos não foram encontrados
         //Verificar se o Zip está vazio
-        [HttpGet("downloadzip/{ids}")]
+        [HttpGet("download/zip/{id}")]
         public async Task<IActionResult> DownloadZip(string ids)
         {
             if (string.IsNullOrEmpty(ids))
