@@ -2,6 +2,7 @@
 using Api.Data.Interfaces;
 using Api.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace Api.Data.Repositories
@@ -26,13 +27,16 @@ namespace Api.Data.Repositories
             return file;
         }
 
-        public async Task<List<Archive>?> GetByIdsAsync(int[] ids)
+        public async Task<(List<Archive>?, List<int>)>  GetByIdsAsync(int[] ids)
         {
             var archives = await _context.Archives
                 .Where(a => ids.Contains(a.Id ?? 0))
                 .ToListAsync();
 
-            return archives;
+            var foundIds = archives.Select(a => a.Id);
+            var notFoundIds = ids.Where(id => !foundIds.Contains(id)).ToList();
+
+            return (archives, notFoundIds);
         }
 
         public async Task<List<Archive>?> GetByNameAsync(string name)

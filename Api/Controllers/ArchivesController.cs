@@ -65,22 +65,24 @@ namespace Api.Controllers
             return File(stream, archive.ContentType, archive.FileName);
         }
 
-        //TODO
-        //Avisar quais arquivos não foram encontrados
-        //Verificar se o Zip está vazio
         [HttpGet("download/zip/{id}")]
-        public async Task<IActionResult> DownloadZip(string ids)
+        public async Task<IActionResult> DownloadZip(string id)
         {
-            if (string.IsNullOrEmpty(ids))
+            if (string.IsNullOrEmpty(id))
                 return NotFound();
 
-            int[] idArray = ids.Split(',').Select(int.Parse).ToArray();
-            var archives = await _archiveRepository.GetByIdsAsync(idArray);
+            int[] idArray = id.Split(',').Select(int.Parse).ToArray();
+            (List<Archive>? archives, List<int> notFoundIds) = await _archiveRepository.GetByIdsAsync(idArray);
 
-            if (archives == null)
+            if (archives == null || !archives.Any())
                 return NotFound();
 
             byte[] zipData = await CreateZipData(archives);
+            if (notFoundIds.Any())
+            {
+                //TODO
+                //informar de alguma forma o usuario sobre os arquivos que não foram encontrados
+            }
             return File(zipData, "application/zip", "archives.zip");
         }
 
