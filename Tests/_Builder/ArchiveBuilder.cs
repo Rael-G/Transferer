@@ -15,7 +15,7 @@ namespace Tests._Builder
         private long _length;
         private string _path;
 
-        private Faker _faker =  new Faker();
+        private readonly Faker _faker =  new();
 
         public ArchiveBuilder() 
         {
@@ -52,6 +52,17 @@ namespace Tests._Builder
         public Archive Build()
         {
             return new Archive(_fileName, _contentType, _length, _path);
+        }
+
+        public static List<Archive> BuildArchives(int num)
+        {
+            List<Archive> archives = new();
+            for (int i = 0; i < num; i++)
+            {
+                archives.Add(new ArchiveBuilder().Build());
+            }
+
+            return archives;
         }
     }
 }
