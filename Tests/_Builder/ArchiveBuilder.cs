@@ -20,7 +20,7 @@ namespace Tests._Builder
         public ArchiveBuilder() 
         {
             _fileName = _faker.System.FileName();
-            _contentType = _faker.System.FileType();
+            _contentType = _faker.System.MimeType();
             _length = _faker.Random.Long(1, 1024);
             _path = _faker.System.FilePath();
         }
