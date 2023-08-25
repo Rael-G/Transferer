@@ -3,6 +3,7 @@ using Bogus;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -10,6 +11,7 @@ namespace Tests._Builder
 {
     public class ArchiveBuilder
     {
+        private int? _id;
         private string _fileName;
         private string _contentType;
         private long _length;
@@ -19,10 +21,17 @@ namespace Tests._Builder
 
         public ArchiveBuilder() 
         {
+            _id = null;
             _fileName = _faker.System.FileName();
             _contentType = _faker.System.MimeType();
             _length = _faker.Random.Long(1, 1024);
             _path = _faker.System.FilePath();
+        }
+
+        public ArchiveBuilder SetId(int id)
+        {
+            _id = id;
+            return this;
         }
 
         public ArchiveBuilder SetFileName(string fileName)
@@ -51,7 +60,12 @@ namespace Tests._Builder
 
         public Archive Build()
         {
-            return new Archive(_fileName, _contentType, _length, _path);
+            var archive = new Archive(_fileName, _contentType, _length, _path);
+            if (_id != null)
+            {
+                archive = SetIdField(archive);
+            }
+            return archive;
         }
 
         public static List<Archive> BuildArchives(int num)
@@ -63,6 +77,15 @@ namespace Tests._Builder
             }
 
             return archives;
+        }
+
+        private Archive SetIdField(Archive archive)
+        {
+            
+            FieldInfo? field = typeof(Archive).GetField("id");
+
+            field?.SetValue(archive, _id);
+            return archive;
         }
     }
 }

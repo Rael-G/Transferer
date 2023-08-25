@@ -1,15 +1,7 @@
 ﻿using Api.Data.Interfaces;
 using Api.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Metadata.Conventions;
-using Microsoft.Extensions.FileProviders;
-using System.ComponentModel;
-using System.IO;
 using System.IO.Compression;
-using System.IO.Pipes;
-using System.Net.Mime;
-using System.Reflection.Metadata;
-using System.Reflection.Metadata.Ecma335;
 using System.Xml.Linq;
 
 namespace Api.Controllers
@@ -46,6 +38,9 @@ namespace Api.Controllers
         [HttpGet("search/{name}")]
         public async Task<IActionResult> Search(string name)
         {
+            if (string.IsNullOrWhiteSpace(name))
+                return BadRequest(string.Empty);
+
             var archives = await _archiveRepository.GetByNameAsync(name);
 
             return Ok(archives);
@@ -54,13 +49,16 @@ namespace Api.Controllers
         [HttpGet("download/{id}")]
         public async Task<IActionResult> Download(int id)
         {
+            if (id <= 0)
+                return BadRequest();
+
             var archive = await _archiveRepository.GetByIdAsync(id);
             if (archive == null) 
                 return NotFound();
 
             var stream = _fileStorage.GetByPath(archive.Path);
             if (stream == null)
-                return NotFound();
+                return StatusCode(500, "File is missing in Storage.");
 
             return File(stream, archive.ContentType, archive.FileName);
         }
@@ -68,21 +66,31 @@ namespace Api.Controllers
         [HttpGet("download/zip/{id}")]
         public async Task<IActionResult> DownloadZip(string id)
         {
-            if (string.IsNullOrEmpty(id))
-                return NotFound();
+            int[] idArray;
+            try
+            {
+                idArray = id.Split(',').Select(int.Parse).ToArray();
+            }
+            catch (Exception)
+            {
+                return BadRequest(id);
+            }
 
-            int[] idArray = id.Split(',').Select(int.Parse).ToArray();
-            (List<Archive>? archives, List<int> notFoundIds) = await _archiveRepository.GetByIdsAsync(idArray);
+            (var archives, var notFoundIds) = await _archiveRepository.GetByIdsAsync(idArray);
 
             if (archives == null || !archives.Any())
                 return NotFound();
 
-            byte[] zipData = await CreateZipData(archives);
+            byte[] zipData = CreateZipData(archives, ref notFoundIds);
+
+            
             if (notFoundIds.Any())
             {
                 //TODO
                 //informar de alguma forma o usuario sobre os arquivos que não foram encontrados
             }
+            if (zipData == null)
+                return StatusCode(500, "Files are missing in Storage.");
             return File(zipData, "application/zip", "archives.zip");
         }
 
@@ -90,6 +98,10 @@ namespace Api.Controllers
         public async Task<IActionResult> Upload(IEnumerable<IFormFile> files)
         {
             List<Archive> archives = new();
+
+            if (files == null || !files.Any())
+                return BadRequest();
+
             foreach (var file in files)
             {
                 Stream stream = file.OpenReadStream();
@@ -103,12 +115,14 @@ namespace Api.Controllers
         [HttpDelete("delete/{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var archive = await _archiveRepository.GetByIdAsync(id);
-            if (archive == null) { return NotFound(); };
+            if (id < 0)
+                return BadRequest();
 
-            if (!_fileStorage.Delete(archive.Path))
+            var archive = await _archiveRepository.GetByIdAsync(id);
+            if (archive == null)
                 return NotFound();
 
+            _fileStorage.Delete(archive.Path);
             await _archiveRepository.DeleteAsync(id);
 
             return NoContent();
@@ -116,22 +130,28 @@ namespace Api.Controllers
 
         //Auxiliary Methods
 
-        private async Task<byte[]> CreateZipData(List<Archive> archives)
+        private byte[]? CreateZipData(List<Archive> archives, ref List<int> notFoundIds)
         {
             using var memoryStream = new MemoryStream();
             using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true))
             {
+                int foundCount = 0;
                 foreach (var item in archives)
                 {
                     var stream = _fileStorage.GetByPath(item.Path);
                     if (stream == null)
+                    {
+                        notFoundIds.Add(item.Id ?? 0);
                         continue;
-
+                    }
+                    foundCount++;
                     var zipEntry = archive.CreateEntry(item.FileName, CompressionLevel.Optimal);
 
                     using var zipStream = zipEntry.Open();
-                    await stream.CopyToAsync(zipStream);
+                    stream.CopyTo(zipStream);
                 }
+                if (foundCount == 0)
+                    return null;
             }
             return memoryStream.ToArray();
         }
