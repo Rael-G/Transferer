@@ -7,13 +7,14 @@ namespace Api.Data.Repositories
     {
         private readonly string _path;
 
-        //TODO
-        //É o local file storage que vai criar o caminho /Storage/Files caso não exista?
-        //Injetar o path a partir de program.cs
-
-        public LocalFileStorage()
+        public LocalFileStorage(string path)
         {
-            _path = @"C:\Users\israe\OneDrive\Documentos\Projetos\C#\Transfero\Api\Storage\Files";
+            _path = path;
+
+            if (!Directory.Exists(_path))
+            {
+                Directory.CreateDirectory(_path);
+            }
         }
 
         public Stream? GetByPath(string fullPath)

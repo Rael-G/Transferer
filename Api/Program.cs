@@ -16,7 +16,8 @@ builder.Services.AddDbContext<TransferoDbContext>(options =>
     options.UseSqlite($"Data Source={Directory.GetCurrentDirectory()}\\Storage\\Db\\Transfero.db;"));
 
 builder.Services.AddScoped<IArchiveRepository, ArchiveRepository>();
-builder.Services.AddScoped<IFileStorage, LocalFileStorage>();
+builder.Services.AddScoped<IFileStorage>(provider => 
+    new LocalFileStorage($"{Directory.GetCurrentDirectory()}\\Storage\\Files\""));
 
 var app = builder.Build();
 
