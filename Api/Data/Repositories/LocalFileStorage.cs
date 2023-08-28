@@ -41,14 +41,17 @@ namespace Api.Data.Repositories
 
         public bool Delete(string path)
         {
+            bool result;
             try
             {
                 File.Delete(path);
             }
-            catch
-            { return false; }
+            finally 
+            { 
+                result = !File.Exists(path);
+            }
 
-            return true;
+            return result;
         }
     }
 }
