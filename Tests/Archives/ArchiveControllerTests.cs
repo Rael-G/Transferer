@@ -28,11 +28,6 @@ namespace Tests.Archives
             _controller = new ArchivesController(_mockRepository.Object, _mockStorage.Object);
         }
 
-        //TODO
-        // Delete_WhenIdIsMinusThanOne_ReturnsBadRequest()
-        // Delete_WhenArchiveIsNotInRepository_ReturnsNotFound()
-        // Delete_WhenArchiveIsInRepository_ReturnsNoContent()
-
         [Fact]
         public async void ListAll_ReturnsOkWithArchives()
         {
@@ -298,6 +293,47 @@ namespace Tests.Archives
                     objResult.Value.ShouldBe(archives);
                 }
             }
+        }
+
+        [Fact]
+        public async void Delete_WhenIdIsMinusThanOne_ReturnsBadRequest()
+        {
+            IActionResult result = await _controller.Delete(-1);
+
+            _mockRepository.Verify(r => r.GetByIdAsync(It.IsAny<int>()), Times.Never);
+            _mockStorage.Verify(s => s.Delete(It.IsAny<string>()), Times.Never);
+
+            result.ShouldBeAssignableTo<BadRequestResult>();
+        }
+
+        [Fact]
+        public async void Delete_WhenArchiveIsNotInRepository_ReturnsNotFound()
+        {
+            int id = 100;
+            Archive? archive = null;
+            _mockRepository.Setup(r => r.GetByIdAsync(It.IsAny<int>())).ReturnsAsync(archive);
+
+            var result = await _controller.Delete(id);
+
+            _mockRepository.Verify(r => r.GetByIdAsync(id), Times.Once);
+            _mockStorage.Verify(s => s.Delete(It.IsAny<string>()), Times.Never);
+
+            result.ShouldBeAssignableTo<NotFoundResult>();
+        }
+
+        [Fact]
+        public async void Delete_WhenArchiveIsInRepository_ReturnsNoContent()
+        {
+            int id = 100;
+            Archive? archive = new ArchiveBuilder().Build();
+            _mockRepository.Setup(r => r.GetByIdAsync(It.IsAny<int>())).ReturnsAsync(archive);
+
+            var result = await _controller.Delete(id);
+
+            _mockRepository.Verify(r => r.GetByIdAsync(id), Times.Once);
+            _mockStorage.Verify(s => s.Delete(archive.Path), Times.Once);
+
+            result.ShouldBeAssignableTo<NoContentResult>();
         }
 
         //Auxiliary
