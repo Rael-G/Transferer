@@ -10,12 +10,12 @@ using Api.Models;
 using Tests._Builder;
 using Xunit.Sdk;
 
-namespace Tests.Archives
+namespace Tests.Unit.Models
 {
     public class ArchiveTests
     {
         [Fact]
-        public void IsCreated() 
+        public void IsCreated()
         {
             string name = "arquivo.txt";
             string type = "txt";
@@ -89,7 +89,7 @@ namespace Tests.Archives
         public void UploadDateIsWhenConstructorIsCalled()
         {
             var past = DateTime.Now;
-            Archive archive = new ArchiveBuilder().Build(); 
+            Archive archive = new ArchiveBuilder().Build();
             var future = DateTime.Now;
 
             Assert.True(past < archive.UploadDate && archive.UploadDate < future);

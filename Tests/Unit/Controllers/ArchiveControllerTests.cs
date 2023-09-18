@@ -13,7 +13,7 @@ using System.IO;
 using System.IO.Compression;
 using Tests._Builder;
 
-namespace Tests.Archives
+namespace Tests.Unit.Controllers
 {
     public class ArchiveControllerTests
     {
@@ -186,7 +186,7 @@ namespace Tests.Archives
             var result = await _controller.DownloadZip(idString);
 
             _mockRepository.Verify(r => r.GetByIdsAsync(idArray), Times.Once);
-            _mockStorage.Verify( s => s.GetByPath(It.IsAny<string>()), Times.Never);
+            _mockStorage.Verify(s => s.GetByPath(It.IsAny<string>()), Times.Never);
 
             result.ShouldBeAssignableTo<NotFoundResult>();
         }
@@ -217,7 +217,7 @@ namespace Tests.Archives
         {
             string idString = "5, 6";
             int[] idArray = new int[] { 5, 6 };
-            List<Archive> archives = new(){ new ArchiveBuilder().SetId(5).SetPath("path").Build() };
+            List<Archive> archives = new() { new ArchiveBuilder().SetId(5).SetPath("path").Build() };
             List<int> notFoundIds = new() { 6 };
             byte[] downloadZip = await CreateZipDataClone(archives);
 
@@ -227,7 +227,7 @@ namespace Tests.Archives
             var result = await _controller.DownloadZip(idString);
 
             _mockRepository.Verify(r => r.GetByIdsAsync(idArray), Times.Once);
-            _mockStorage.Verify( s => s.GetByPath("path"), Times.Once);
+            _mockStorage.Verify(s => s.GetByPath("path"), Times.Once);
 
             result.ShouldBeAssignableTo<FileContentResult>();
             if (result is FileContentResult fileStreamResult)
@@ -274,9 +274,9 @@ namespace Tests.Archives
                 archives.Add(new(file.FileName, file.ContentType, file.Length, "path"));
             }
 
-            _mockRepository.Setup( r => r.SaveAsync(It.IsAny<Archive>())).
+            _mockRepository.Setup(r => r.SaveAsync(It.IsAny<Archive>())).
                 ReturnsAsync((Archive archive) => archive);
-            _mockStorage.Setup( s => s.Store(It.IsAny<Stream>())).Returns("path");
+            _mockStorage.Setup(s => s.Store(It.IsAny<Stream>())).Returns("path");
 
             var result = await _controller.Upload(files);
 

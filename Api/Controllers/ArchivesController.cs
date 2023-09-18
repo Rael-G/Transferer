@@ -10,14 +10,6 @@ namespace Api.Controllers
     [Route("[controller]")]
     public class ArchivesController : ControllerBase
     {
-        //TODO EXTERNO
-        //Testes unitarios e integração
-        //Implementar autorização e criptografia
-        //Cocumentação swagger e readme.md
-        //Verificação de virus nos arquivos
-        //Integração com Armazenamento em Nuvem?
-        //Organização em Pastas (VFS: virtual file system)
-
         private readonly IArchiveRepository _archiveRepository;
         private readonly IFileStorage _fileStorage;
 

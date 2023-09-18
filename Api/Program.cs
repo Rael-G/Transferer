@@ -5,23 +5,20 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+//TODO: extrair a connection string para um metodo que crie o diretorio caso não exista. Deletar o .gitkeep do diretorio
 builder.Services.AddDbContext<TransferoDbContext>(options => 
     options.UseSqlite($"Data Source={Directory.GetCurrentDirectory()}\\Storage\\Db\\Transfero.db;"));
 
 builder.Services.AddScoped<IArchiveRepository, ArchiveRepository>();
 builder.Services.AddScoped<IFileStorage>(provider => 
-    new LocalFileStorage($"{Directory.GetCurrentDirectory()}\\Storage\\Files\""));
+    new LocalFileStorage($"{Directory.GetCurrentDirectory()}\\Storage\\Files"));
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
