@@ -9,9 +9,9 @@ namespace Api.Data.Repositories
 {
     public class ArchiveRepository : IArchiveRepository
     {
-        private readonly TransferoDbContext _context;
+        private readonly TransfererDbContext _context;
 
-        public ArchiveRepository(TransferoDbContext context)
+        public ArchiveRepository(TransfererDbContext context)
         {
             _context = context;
         }

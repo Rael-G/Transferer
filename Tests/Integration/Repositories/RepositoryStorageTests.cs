@@ -30,7 +30,7 @@ namespace Tests.Integration.Repositories
 
         public RepositoryStorageTests()
         {
-            var context = new TransferoDbContext(new DbContextOptionsBuilder<TransferoDbContext>()
+            var context = new TransfererDbContext(new DbContextOptionsBuilder<TransfererDbContext>()
             .UseInMemoryDatabase(databaseName: "InMemoryTestDatabase")
             .Options);
             var tempPath = Path.Combine(Path.GetTempPath(), "tests");

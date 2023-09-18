@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Api.Migrations
 {
-    [DbContext(typeof(TransferoDbContext))]
+    [DbContext(typeof(TransfererDbContext))]
     [Migration("20230729025026_UploadDate added to Archive")]
     partial class UploadDateaddedtoArchive
     {

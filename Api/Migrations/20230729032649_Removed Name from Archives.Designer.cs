@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Api.Migrations
 {
-    [DbContext(typeof(TransferoDbContext))]
+    [DbContext(typeof(TransfererDbContext))]
     [Migration("20230729032649_Removed Name from Archives")]
     partial class RemovedNamefromArchives
     {

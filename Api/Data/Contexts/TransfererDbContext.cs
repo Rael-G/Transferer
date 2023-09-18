@@ -3,9 +3,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Api.Data.Contexts
 {
-    public class TransferoDbContext : DbContext
+    public class TransfererDbContext : DbContext
     {
-        public TransferoDbContext(DbContextOptions options) : base(options) { }
+        public TransfererDbContext(DbContextOptions options) : base(options) { }
 
         public DbSet<Archive> Archives { get; set; }
     }
