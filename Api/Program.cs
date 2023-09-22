@@ -1,3 +1,4 @@
+using Api;
 using Api.Data.Contexts;
 using Api.Data.Interfaces;
 using Api.Data.Repositories;
@@ -9,13 +10,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-//TODO: extrair a connection string para um metodo que crie o diretorio caso não exista. Deletar o .gitkeep do diretorio
-builder.Services.AddDbContext<TransfererDbContext>(options => 
-    options.UseSqlite($"Data Source={Directory.GetCurrentDirectory()}\\Storage\\Db\\Transferer.db;"));
 
-builder.Services.AddScoped<IArchiveRepository, ArchiveRepository>();
-builder.Services.AddScoped<IFileStorage>(provider => 
-    new LocalFileStorage($"{Directory.GetCurrentDirectory()}\\Storage\\Files"));
+
+builder.Services.ConfigureAuth();
 
 var app = builder.Build();
 
@@ -26,9 +23,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
