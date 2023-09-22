@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace Authentication.Context
+namespace Authentication.Contexts
 {
     public class UserContext : IdentityDbContext<IdentityUser>
     {

@@ -5,7 +5,11 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Api", "Api\Api.csproj", "{ACBADDD2-71F3-4832-9779-75866C2B52C9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{6F9B7641-BACF-41AF-8176-2E1E3948FB14}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests", "Tests\Tests.csproj", "{6F9B7641-BACF-41AF-8176-2E1E3948FB14}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Authentication", "Authentication\Authentication.csproj", "{DCCC2941-0167-4DE7-8DB6-9BA23BED0712}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrastructure", "Infrastructure\Infrastructure.csproj", "{0A3D5DDC-20A6-43EF-92F2-66B97D59C089}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,8 +25,19 @@ Global
 		{6F9B7641-BACF-41AF-8176-2E1E3948FB14}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6F9B7641-BACF-41AF-8176-2E1E3948FB14}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6F9B7641-BACF-41AF-8176-2E1E3948FB14}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DCCC2941-0167-4DE7-8DB6-9BA23BED0712}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DCCC2941-0167-4DE7-8DB6-9BA23BED0712}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DCCC2941-0167-4DE7-8DB6-9BA23BED0712}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DCCC2941-0167-4DE7-8DB6-9BA23BED0712}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0A3D5DDC-20A6-43EF-92F2-66B97D59C089}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0A3D5DDC-20A6-43EF-92F2-66B97D59C089}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0A3D5DDC-20A6-43EF-92F2-66B97D59C089}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0A3D5DDC-20A6-43EF-92F2-66B97D59C089}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {42B3971B-3485-4AFE-AA4E-871721ABAD77}
 	EndGlobalSection
 EndGlobal

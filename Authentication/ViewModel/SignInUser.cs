@@ -2,7 +2,7 @@
 
 namespace Authentication.ViewModel
 {
-    public record UserViewModel
+    public record SignInUser
     {
         [Required]
         public string UserName { get; set; }
@@ -12,7 +12,7 @@ namespace Authentication.ViewModel
         [MinLength(8)]
         public string Password { get; set; }
 
-        public UserViewModel(string userName, string password)
+        public SignInUser(string userName, string password)
         {
             UserName = userName;
             Password = password;

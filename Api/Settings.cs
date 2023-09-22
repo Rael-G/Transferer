@@ -3,18 +3,16 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using Authentication.Context;
-using Api.Data.Contexts;
 using Api.Data.Interfaces;
 using Api.Data.Repositories;
+using Api.Data.Contexts;
+using Authentication.Contexts;
+using Authentication.Services;
 
 namespace Api
 {
     public static class Settings
     {
-        //InDevelopment
-        public static readonly string _secret = "GUID SECRET";
-
         public static void ConfigureAPI(this IServiceCollection services)
         {
             //TODO: extrair a connection string para um metodo que crie o diretorio caso não exista. Deletar o .gitkeep do diretorio
@@ -35,7 +33,7 @@ namespace Api
                     $"Data Source={Directory.GetCurrentDirectory()}\\Auth.db;"
             ));
 
-            var key = Encoding.ASCII.GetBytes(Settings._secret);
+            var key = Encoding.ASCII.GetBytes(TokenService._secret);
 
             services.AddAuthentication(a =>
             {
