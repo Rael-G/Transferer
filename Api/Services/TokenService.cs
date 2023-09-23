@@ -4,18 +4,14 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-namespace Authentication.Services
+namespace Api.Services
 {
     public class TokenService
     {
-        //TODO
-        //Make _secret secret
-        public static readonly string _secret = "secret?";
-
         public static string GenerateToken(IdentityUser user)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_secret);
+            var key = Encoding.ASCII.GetBytes(Settings._secret);
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {

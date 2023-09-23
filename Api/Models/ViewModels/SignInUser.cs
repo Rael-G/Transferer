@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Authentication.ViewModel
+namespace Api.Models.ViewModels
 {
     public record SignInUser
     {

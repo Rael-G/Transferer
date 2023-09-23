@@ -2,8 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
-using Authentication.ViewModel;
-using Authentication.Services;
+using Api.Models.ViewModels;
+using Api.Services;
 
 namespace Api.Controllers
 {
@@ -16,7 +16,7 @@ namespace Api.Controllers
             _userManager = userManager;
         }
 
-        [HttpGet()]
+        [HttpPost()]
         [Route("login")]
         [AllowAnonymous]
         public async Task<IActionResult> Login(SignInUser signInUser)

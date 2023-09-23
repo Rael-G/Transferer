@@ -1,8 +1,4 @@
 using Api;
-using Api.Data.Contexts;
-using Api.Data.Interfaces;
-using Api.Data.Repositories;
-using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,8 +6,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-
-
+builder.Services.ConfigureAPI();
 builder.Services.ConfigureAuth();
 
 var app = builder.Build();

@@ -6,13 +6,16 @@ using System.Text;
 using Api.Data.Interfaces;
 using Api.Data.Repositories;
 using Api.Data.Contexts;
-using Authentication.Contexts;
-using Authentication.Services;
+using Api.Services;
 
 namespace Api
 {
     public static class Settings
     {
+        //TODO
+        //Make _secret secret
+        public static readonly string _secret = "secret? 50a1b6e3-bfdb-448f-850f-17ff478f833d";
+
         public static void ConfigureAPI(this IServiceCollection services)
         {
             //TODO: extrair a connection string para um metodo que crie o diretorio caso não exista. Deletar o .gitkeep do diretorio
@@ -30,10 +33,10 @@ namespace Api
 
             services.AddDbContext<UserContext>(
                 options => options.UseSqlite(
-                    $"Data Source={Directory.GetCurrentDirectory()}\\Auth.db;"
+                    $"Data Source={Directory.GetCurrentDirectory()}\\Storage\\Db\\Auth.db;"
             ));
 
-            var key = Encoding.ASCII.GetBytes(TokenService._secret);
+            var key = Encoding.ASCII.GetBytes(_secret);
 
             services.AddAuthentication(a =>
             {

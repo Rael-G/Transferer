@@ -10,6 +10,5 @@ namespace Api.Data.Interfaces
         Task<List<Archive>?> GetByNameAsync(string name);
         Task<Archive> SaveAsync(Archive archive);
         Task<bool> DeleteAsync(int id);
-        
     }
 }

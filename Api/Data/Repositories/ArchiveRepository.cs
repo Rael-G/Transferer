@@ -42,7 +42,7 @@ namespace Api.Data.Repositories
         public async Task<List<Archive>?> GetByNameAsync(string name)
         {
              var archives = await _context.Archives
-                .Where(a => Regex.IsMatch(a.FileName, name))
+                .Where(a => Regex.IsMatch(a.FileName.ToLower(), name.ToLower()))
                 .ToListAsync();
 
             return archives;
