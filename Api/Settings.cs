@@ -43,6 +43,7 @@ namespace Api
             {
                 a.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 a.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                a.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
             }).AddJwtBearer(j =>
             {
                 j.RequireHttpsMetadata = false;

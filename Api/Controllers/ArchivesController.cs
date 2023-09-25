@@ -20,6 +20,7 @@ namespace Api.Controllers
             _fileStorage = storage;
         }
 
+        [Authorize(AuthenticationSchemes = "Bearer")]
         [HttpGet("list")]
         public async Task<IActionResult> ListAll()
         {
@@ -28,6 +29,7 @@ namespace Api.Controllers
             return Ok(archives);
         }
 
+        [Authorize(AuthenticationSchemes = "Bearer")]
         [HttpGet("search/{name}")]
         public async Task<IActionResult> Search(string name)
         {
@@ -39,6 +41,7 @@ namespace Api.Controllers
             return Ok(archives);
         }
 
+        [Authorize(AuthenticationSchemes = "Bearer")]
         [HttpGet("download/{id}")]
         public async Task<IActionResult> Download(int id)
         {
@@ -56,6 +59,7 @@ namespace Api.Controllers
             return File(stream, archive.ContentType, archive.FileName);
         }
 
+        [Authorize(AuthenticationSchemes = "Bearer")]
         [HttpGet("download/zip/{id}")]
         public async Task<IActionResult> DownloadZip(string id)
         {
@@ -87,6 +91,7 @@ namespace Api.Controllers
             return File(zipData, "application/zip", "archives.zip");
         }
 
+        [Authorize(AuthenticationSchemes = "Bearer")]
         [HttpPost("upload")]
         public async Task<IActionResult> Upload(IEnumerable<IFormFile> files)
         {
@@ -105,6 +110,7 @@ namespace Api.Controllers
             return Ok(archives);
         }
 
+        [Authorize(AuthenticationSchemes = "Bearer")]
         [HttpDelete("delete/{id}")]
         public async Task<IActionResult> Delete(int id)
         {
