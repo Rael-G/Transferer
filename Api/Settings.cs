@@ -7,6 +7,7 @@ using Api.Data.Interfaces;
 using Api.Data.Repositories;
 using Api.Data.Contexts;
 using Api.Services;
+using Microsoft.OpenApi.Models;
 
 namespace Api
 {
@@ -60,6 +61,35 @@ namespace Api
                 .AddDefaultTokenProviders();
 
             services.AddAuthorization();
+        }
+
+        public static void ConfigureSwagger(this IServiceCollection services)
+        {
+            services.AddSwaggerGen(c =>
+            {
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Description = "JWT Authorization header using the Bearer scheme.",
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT"
+                });
+
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        Array.Empty<string>()
+                    }
+                });
+            });
         }
     }
 }

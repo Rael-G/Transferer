@@ -1,4 +1,5 @@
 using Api;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +9,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.ConfigureAPI();
 builder.Services.ConfigureAuth();
+builder.Services.ConfigureSwagger();
 
 var app = builder.Build();
 
