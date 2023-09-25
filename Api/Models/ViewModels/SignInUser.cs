@@ -7,9 +7,8 @@ namespace Api.Models.ViewModels
         [Required]
         public string UserName { get; set; }
 
-        [DataType(DataType.Password)]
         [Required]
-        [MinLength(8)]
+        [DataType(DataType.Password)]
         public string Password { get; set; }
 
         public SignInUser(string userName, string password)

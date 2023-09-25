@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Api.Models.ViewModels;
 using Api.Services;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 
 namespace Api.Controllers
 {
@@ -49,12 +50,9 @@ namespace Api.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> SignIn(SignInUser signInUser)
         {
-            var existing = await _userManager.Users.FirstOrDefaultAsync(
-                u => u.UserName == signInUser.UserName);
-
-            if (existing != null)
+            if (!ModelState.IsValid)
             {
-                return BadRequest($"Username unavailable: {signInUser.UserName}");
+                return BadRequest(ModelState);
             }
 
             IdentityUser user = new IdentityUser()
@@ -62,7 +60,12 @@ namespace Api.Controllers
                 UserName = signInUser.UserName
             };
 
-            await _userManager.CreateAsync(user, signInUser.Password);
+            var result = await _userManager.CreateAsync(user, signInUser.Password); // BUG ?
+
+            if (!result.Succeeded)
+            {
+                return BadRequest(result);
+            }
 
             var token = TokenService.GenerateToken(user);
             var logedUser = new LogedUser { UserName = user.UserName, Token = token };

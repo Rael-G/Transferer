@@ -1,5 +1,6 @@
 ﻿using Api.Data.Interfaces;
 using Api.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.IO.Compression;
 using System.Xml.Linq;
@@ -73,7 +74,7 @@ namespace Api.Controllers
             if (archives == null || !archives.Any())
                 return NotFound();
 
-            byte[] zipData = CreateZipData(archives, ref notFoundIds);
+            byte[]? zipData = CreateZipData(archives, ref notFoundIds);
 
             
             if (notFoundIds.Any())
