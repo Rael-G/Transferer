@@ -9,13 +9,13 @@ using Api.Data.Contexts;
 using Api.Services;
 using Microsoft.OpenApi.Models;
 using Api.Models;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Api
 {
     public static class Settings
     {
-        //TODO
-        //Make _secret secret
+        //TODO: Make _secret secret
         public static readonly string _secret = "secret? 50a1b6e3-bfdb-448f-850f-17ff478f833d";
 
         public static void ConfigureAPI(this IServiceCollection services)
@@ -56,8 +56,13 @@ namespace Api
             services.AddIdentity<User, IdentityRole>()
                 .AddEntityFrameworkStores<TransfererDbContext>()
                 .AddDefaultTokenProviders();
-
             services.AddAuthorization();
+
+            using var serviceProvider = services.BuildServiceProvider();
+            var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            var userManager = serviceProvider.GetRequiredService<UserManager<User>>();
+
+            Seeder.Seed(roleManager, userManager);
         }
 
         public static void ConfigureSwagger(this IServiceCollection services)

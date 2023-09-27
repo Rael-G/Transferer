@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Api.Migrations
 {
     [DbContext(typeof(TransfererDbContext))]
-    [Migration("20230927002905_ArchiveUser")]
-    partial class ArchiveUser
+    [Migration("20230927231214_UserRoles")]
+    partial class UserRoles
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

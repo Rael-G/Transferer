@@ -37,7 +37,7 @@ namespace Api.Controllers
                 return BadRequest("Incorrect password.");
             }
 
-            var token = TokenService.GenerateToken(user);
+            var token = TokenService.GenerateToken(user, _userManager);
 
             var logedUser = new LogedUser { UserName = user.UserName, Token = token };
 
@@ -59,14 +59,14 @@ namespace Api.Controllers
                 UserName = signInUser.UserName
             };
 
-            var result = await _userManager.CreateAsync(user, signInUser.Password); // BUG ?
+            var result = await _userManager.CreateAsync(user, signInUser.Password);
 
             if (!result.Succeeded)
             {
                 return BadRequest(result);
             }
 
-            var token = TokenService.GenerateToken(user);
+            var token = TokenService.GenerateToken(user, _userManager);
             var logedUser = new LogedUser { UserName = user.UserName, Token = token };
 
             return CreatedAtAction(nameof(Login), new { logedUser });

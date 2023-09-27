@@ -1,0 +1,33 @@
+	branch auth
+adicionar role admin, criar administrador, criar controller de usuarios que o admin tem acesso
+tornar secret key secreta
+consertar testes
+
+	branch main
+endpoints retornam model puro, transformar em viewmodels
+criar mais testes tanto para archivescontroller quanto para login e users
+vasculhar por methodos que retornem possiveis exceções, tratar
+refatorar endpoints, adicionar mais retornos aos endpoints
+melhorar testes
+
+	branch doc
+adicionar logging
+documentação ///summary
+
+	branch security
+criptografia
+aprimorar segurança
+
+	branch frontend
+frontend + virtual file system
+desempenho da aplicação
+
+	branch data
+move to postgres
+cloud storage
+
+	branch devops
+docker
+tests automation
+rainbow(3) deployment
++

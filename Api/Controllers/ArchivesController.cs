@@ -14,12 +14,15 @@ namespace Api.Controllers
         private readonly IArchiveRepository _archiveRepository;
         private readonly IFileStorage _fileStorage;
         private readonly UserManager<User> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
 
-        public ArchivesController(IArchiveRepository repository, IFileStorage storage, UserManager<User> userManager)
+        public ArchivesController(IArchiveRepository repository, IFileStorage storage, 
+            UserManager<User> userManager, RoleManager<IdentityRole> roleManager)
         {
             _archiveRepository = repository;
             _fileStorage = storage;
             _userManager = userManager;
+            _roleManager = roleManager;
         }
 
         [Authorize(AuthenticationSchemes = "Bearer")]
