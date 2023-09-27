@@ -3,10 +3,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Api.Migrations.User
+namespace Api.Migrations
 {
     /// <inheritdoc />
-    public partial class IdentityUser : Migration
+    public partial class ArchiveUser : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -67,6 +67,29 @@ namespace Api.Migrations.User
                         name: "FK_AspNetRoleClaims_AspNetRoles_RoleId",
                         column: x => x.RoleId,
                         principalTable: "AspNetRoles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Archives",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    FileName = table.Column<string>(type: "TEXT", nullable: false),
+                    ContentType = table.Column<string>(type: "TEXT", nullable: false),
+                    Length = table.Column<long>(type: "INTEGER", nullable: true),
+                    Path = table.Column<string>(type: "TEXT", nullable: false),
+                    UploadDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UserId = table.Column<string>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Archives", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Archives_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -157,6 +180,11 @@ namespace Api.Migrations.User
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_Archives_UserId",
+                table: "Archives",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
                 table: "AspNetRoleClaims",
                 column: "RoleId");
@@ -197,6 +225,9 @@ namespace Api.Migrations.User
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "Archives");
+
             migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");
 

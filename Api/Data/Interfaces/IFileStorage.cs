@@ -1,6 +1,4 @@
-﻿using Api.Models;
-
-namespace Api.Data.Interfaces
+﻿namespace Api.Data.Interfaces
 {
     public interface IFileStorage
     {

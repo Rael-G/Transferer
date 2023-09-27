@@ -8,6 +8,7 @@ using Api.Data.Repositories;
 using Api.Data.Contexts;
 using Api.Services;
 using Microsoft.OpenApi.Models;
+using Api.Models;
 
 namespace Api
 {
@@ -30,12 +31,7 @@ namespace Api
 
         public static void ConfigureAuth(this IServiceCollection services)
         {
-            services.AddScoped<UserContext, UserContext>();
-
-            services.AddDbContext<UserContext>(
-                options => options.UseSqlite(
-                    $"Data Source={Directory.GetCurrentDirectory()}\\Storage\\Db\\Auth.db;"
-            ));
+            services.AddScoped<TransfererDbContext, TransfererDbContext>();
 
             var key = Encoding.ASCII.GetBytes(_secret);
 
@@ -57,8 +53,8 @@ namespace Api
                 };
             });
 
-            services.AddIdentity<IdentityUser, IdentityRole>()
-                .AddEntityFrameworkStores<UserContext>()
+            services.AddIdentity<User, IdentityRole>()
+                .AddEntityFrameworkStores<TransfererDbContext>()
                 .AddDefaultTokenProviders();
 
             services.AddAuthorization();

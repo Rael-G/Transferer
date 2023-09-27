@@ -1,18 +1,17 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Api.Models.ViewModels;
 using Api.Services;
-using Microsoft.EntityFrameworkCore.Metadata.Conventions;
+using Api.Models;
 
 namespace Api.Controllers
 {
     [ApiController]
     public class LoginController : ControllerBase
     {
-        private readonly UserManager<IdentityUser> _userManager;
-        public LoginController(UserManager<IdentityUser> userManager)
+        private readonly UserManager<User> _userManager;
+        public LoginController(UserManager<User> userManager)
         {
             _userManager = userManager;
         }
@@ -29,7 +28,7 @@ namespace Api.Controllers
                 return NotFound("User not found.");
             }
 
-            var passwordHasher = new PasswordHasher<IdentityUser>();
+            var passwordHasher = new PasswordHasher<User>();
             var result = passwordHasher.VerifyHashedPassword(
                 user, user.PasswordHash, signInUser.Password);
 
@@ -55,7 +54,7 @@ namespace Api.Controllers
                 return BadRequest(ModelState);
             }
 
-            IdentityUser user = new IdentityUser()
+            User user = new User()
             {
                 UserName = signInUser.UserName
             };

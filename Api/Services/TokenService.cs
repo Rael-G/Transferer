@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Api.Models;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -8,7 +8,7 @@ namespace Api.Services
 {
     public class TokenService
     {
-        public static string GenerateToken(IdentityUser user)
+        public static string GenerateToken(User user)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(Settings._secret);
@@ -23,9 +23,9 @@ namespace Api.Services
 
                 Subject = new ClaimsIdentity(new[]
                 {
-                new Claim(ClaimTypes.Name, user.UserName),
-                new Claim("UserId", user.Id)
-            })
+                    new Claim(ClaimTypes.Name, user.UserName),
+                    new Claim("UserId", user.Id)
+                })
             };
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
