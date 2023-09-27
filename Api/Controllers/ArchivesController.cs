@@ -38,7 +38,7 @@ namespace Api.Controllers
         }
 
         [Authorize(AuthenticationSchemes = "Bearer", Roles = "admin")]
-        [HttpGet("list")]
+        [HttpGet("listall")]
         public async Task<IActionResult> ListAll()
         {
             var archives = await _archiveRepository.GetAllAsync();
