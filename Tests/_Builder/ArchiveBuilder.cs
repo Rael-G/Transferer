@@ -16,6 +16,7 @@ namespace Tests._Builder
         private string _contentType;
         private long _length;
         private string _path;
+        private User _user;
 
         private readonly Faker _faker =  new();
 
@@ -26,6 +27,7 @@ namespace Tests._Builder
             _contentType = _faker.System.MimeType();
             _length = _faker.Random.Long(1, 1024);
             _path = _faker.System.FilePath();
+            _user = new User();
         }
 
         public ArchiveBuilder SetId(int id)
@@ -60,7 +62,7 @@ namespace Tests._Builder
 
         public Archive Build()
         {
-            var archive = new Archive(_fileName, _contentType, _length, _path);
+            var archive = new Archive(_fileName, _contentType, _length, _path, _user);
             if (_id != null)
             {
                 archive = SetIdField(archive);

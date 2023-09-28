@@ -21,13 +21,15 @@ namespace Tests.Unit.Models
             string type = "txt";
             long length = 16;
             string path = ".\\documents\\arquivo.txt";
+            User user = new User();
 
-            Archive archive = new(name, type, length, path);
+            Archive archive = new(name, type, length, path, user);
 
             Assert.Equal(name, archive.FileName);
             Assert.Equal(type, archive.ContentType);
             Assert.Equal(length, archive.Length);
             Assert.Equal(path, archive.Path);
+            Assert.Equal(user, archive.User);
         }
 
         [Theory]

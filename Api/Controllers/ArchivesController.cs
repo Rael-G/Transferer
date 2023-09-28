@@ -13,16 +13,14 @@ namespace Api.Controllers
     {
         private readonly IArchiveRepository _archiveRepository;
         private readonly IFileStorage _fileStorage;
-        private readonly UserManager<User> _userManager;
-        private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly IUserRepository _userRepository;
 
-        public ArchivesController(IArchiveRepository repository, IFileStorage storage, 
-            UserManager<User> userManager, RoleManager<IdentityRole> roleManager)
+        public ArchivesController(IArchiveRepository repository, 
+            IFileStorage storage, IUserRepository userRepository)
         {
             _archiveRepository = repository;
             _fileStorage = storage;
-            _userManager = userManager;
-            _roleManager = roleManager;
+            _userRepository = userRepository;
         }
 
         [Authorize(AuthenticationSchemes = "Bearer")]
@@ -135,7 +133,7 @@ namespace Api.Controllers
                 return StatusCode(500, "Claim.UserId not found");
             }
 
-            var user = _userManager.Users.FirstOrDefault(u => u.Id == userId);
+            var user = _userRepository.GetByIdAsync(userId);
 
             List<Archive> archives = new();
 

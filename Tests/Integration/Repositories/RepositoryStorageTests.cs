@@ -27,6 +27,7 @@ namespace Tests.Integration.Repositories
         private readonly LocalFileStorage _fileStorage;
         private readonly ArchivesController _controller;
         private readonly IArchiveRepository _archiveRepository;
+        private readonly IUserRepository _userRepository;
 
         public RepositoryStorageTests()
         {
@@ -37,13 +38,15 @@ namespace Tests.Integration.Repositories
 
             _fileStorage = new LocalFileStorage(tempPath);
             _archiveRepository = new ArchiveRepository(context);
-            _controller = new ArchivesController(_archiveRepository, _fileStorage);
+            _userRepository = new UserRepository();
+
+            _controller = new ArchivesController(_archiveRepository, _fileStorage, _userRepository);
         }
 
         [Fact]
         public async Task UploadAndDownload_FileExists_ReturnsFileContent()
         {
-            int Id;
+            Guid Id;
             string fileName = "testfile.txt";
             string fileContent = "Hello, World!";
             var stream = new MemoryStream(Encoding.UTF8.GetBytes(fileContent));

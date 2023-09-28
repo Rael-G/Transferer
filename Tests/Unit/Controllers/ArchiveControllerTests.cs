@@ -17,15 +17,17 @@ namespace Tests.Unit.Controllers
 {
     public class ArchiveControllerTests
     {
-        private readonly Mock<IArchiveRepository> _mockRepository;
+        private readonly Mock<IArchiveRepository> _mockArchiveRepository;
         private readonly Mock<IFileStorage> _mockStorage;
+        private readonly Mock<IUserRepository> _mockUserRepository;
         private readonly ArchivesController _controller;
 
         public ArchiveControllerTests()
         {
-            _mockRepository = new Mock<IArchiveRepository>();
+            _mockArchiveRepository = new Mock<IArchiveRepository>();
             _mockStorage = new Mock<IFileStorage>();
-            _controller = new ArchivesController(_mockRepository.Object, _mockStorage.Object);
+            _mockUserRepository = new Mock<IUserRepository>();
+            _controller = new ArchivesController(_mockArchiveRepository.Object, _mockStorage.Object, _mockUserRepository.Object);
         }
 
         [Fact]
@@ -33,11 +35,11 @@ namespace Tests.Unit.Controllers
         {
             var archives = ArchiveBuilder.BuildArchives(10);
 
-            _mockRepository.Setup(r => r.GetAllAsync()).ReturnsAsync(archives);
+            _mockArchiveRepository.Setup(r => r.GetAllAsync()).ReturnsAsync(archives);
 
             var result = await _controller.ListAll();
 
-            _mockRepository.Verify(r => r.GetAllAsync(), Times.Once);
+            _mockArchiveRepository.Verify(r => r.GetAllAsync(), Times.Once);
 
             result.ShouldBeAssignableTo<OkObjectResult>();
             if (result is OkObjectResult objResult)
@@ -59,7 +61,7 @@ namespace Tests.Unit.Controllers
         {
             IActionResult result = await _controller.Search(names);
 
-            _mockRepository.Verify(r => r.GetByNameAsync(It.IsAny<string>()), Times.Never);
+            _mockArchiveRepository.Verify(r => r.GetByNameAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
 
             result.ShouldBeAssignableTo<BadRequestObjectResult>();
         }
@@ -70,11 +72,11 @@ namespace Tests.Unit.Controllers
             List<Archive> archives = ArchiveBuilder.BuildArchives(10);
             var names = "picture";
 
-            _mockRepository.Setup(r => r.GetByNameAsync(It.IsAny<string>())).ReturnsAsync(archives);
+            _mockArchiveRepository.Setup(r => r.GetByNameAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(archives);
 
             IActionResult result = await _controller.Search(names);
 
-            _mockRepository.Verify(r => r.GetByNameAsync(names), Times.Once);
+            _mockArchiveRepository.Verify(r => r.GetByNameAsync(names, It.IsAny<string>()), Times.Once);
 
             result.ShouldBeAssignableTo<OkObjectResult>();
             if (result is OkObjectResult objResult)
@@ -89,26 +91,16 @@ namespace Tests.Unit.Controllers
         }
 
         [Fact]
-        public async void Download_WhenIdIsMinusThanZero_ReturnsBadRequest()
-        {
-            IActionResult result = await _controller.Download(-1);
-
-            _mockRepository.Verify(r => r.GetByIdAsync(It.IsAny<int>()), Times.Never);
-
-            result.ShouldBeAssignableTo<BadRequestResult>();
-        }
-
-        [Fact]
         public async void Download_WhenArchiveIsNotInRepository_ReturnsNotFound()
         {
-            var id = 1;
+            Guid id = Guid.NewGuid();
             Archive? notFoundArchive = null;
 
-            _mockRepository.Setup(r => r.GetByIdAsync(It.IsAny<int>())).ReturnsAsync(notFoundArchive);
+            _mockArchiveRepository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<string>())).ReturnsAsync(notFoundArchive);
 
             var result = await _controller.Download(id);
 
-            _mockRepository.Verify(r => r.GetByIdAsync(id), Times.Once);
+            _mockArchiveRepository.Verify(r => r.GetByIdAsync(id, It.IsAny<string>()), Times.Once);
             _mockStorage.Verify(s => s.GetByPath(It.IsAny<string>()), Times.Never);
 
             result.ShouldBeAssignableTo<NotFoundResult>();
@@ -117,16 +109,16 @@ namespace Tests.Unit.Controllers
         [Fact]
         public async void Download_WhenStreamIsNotInStorage_ReturnsNotFound()
         {
-            var id = 1;
+            Guid id = Guid.NewGuid();
             Archive archive = new ArchiveBuilder().Build();
             Stream? notFoundStream = null;
 
-            _mockRepository.Setup(r => r.GetByIdAsync(It.IsAny<int>())).ReturnsAsync(archive);
+            _mockArchiveRepository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<string>())).ReturnsAsync(archive);
             _mockStorage.Setup(s => s.GetByPath(It.IsAny<string>())).Returns(notFoundStream);
 
             var result = await _controller.Download(id);
 
-            _mockRepository.Verify(r => r.GetByIdAsync(id), Times.Once);
+            _mockArchiveRepository.Verify(r => r.GetByIdAsync(id, It.IsAny<string>()), Times.Once);
             _mockStorage.Verify(s => s.GetByPath(archive.Path), Times.Once);
 
             var statusCodeResult = Assert.IsType<ObjectResult>(result);
@@ -136,16 +128,16 @@ namespace Tests.Unit.Controllers
         [Fact]
         public async void Download_WhenArchiveIsInRepositoryAndStreamIsInStorage_ReturnsFileStream()
         {
-            var id = 1;
+            Guid id = Guid.NewGuid();
             Archive archive = new ArchiveBuilder().Build();
             Stream stream = new MemoryStream();
 
-            _mockRepository.Setup(r => r.GetByIdAsync(It.IsAny<int>())).ReturnsAsync(archive);
+            _mockArchiveRepository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<string>())).ReturnsAsync(archive);
             _mockStorage.Setup(s => s.GetByPath(It.IsAny<string>())).Returns(stream);
 
             var result = await _controller.Download(id);
 
-            _mockRepository.Verify(r => r.GetByIdAsync(id), Times.Once);
+            _mockArchiveRepository.Verify(r => r.GetByIdAsync(id, It.IsAny<string>()), Times.Once);
             _mockStorage.Verify(s => s.GetByPath(archive.Path), Times.Once);
 
             result.ShouldBeAssignableTo<FileStreamResult>();
@@ -167,7 +159,7 @@ namespace Tests.Unit.Controllers
         {
             var result = await _controller.DownloadZip(id);
 
-            _mockRepository.Verify(r => r.GetByIdsAsync(It.IsAny<int[]>()), Times.Never);
+            _mockArchiveRepository.Verify(r => r.GetByIdsAsync(It.IsAny<Guid[]>(), It.IsAny<string>()), Times.Never);
             _mockStorage.Verify(s => s.GetByPath(It.IsAny<string>()), Times.Never);
 
             result.ShouldBeAssignableTo<BadRequestObjectResult>();
@@ -177,15 +169,15 @@ namespace Tests.Unit.Controllers
         public async void DownloadZip_WhenArchivesAreNotInRepository_ReturnsNotFound()
         {
             string idString = "1";
-            int[] idArray = new int[] { 1 };
+            Guid[] idArray = new Guid[] { Guid.NewGuid() };
             List<Archive> archives = new();
             List<int> notFoundIds = new() { 1 };
 
-            _mockRepository.Setup(r => r.GetByIdsAsync(It.IsAny<int[]>())).ReturnsAsync((archives, notFoundIds));
+            _mockArchiveRepository.Setup(r => r.GetByIdsAsync(It.IsAny<Guid[]>(), It.IsAny<string>())).ReturnsAsync((archives));
 
             var result = await _controller.DownloadZip(idString);
 
-            _mockRepository.Verify(r => r.GetByIdsAsync(idArray), Times.Once);
+            _mockArchiveRepository.Verify(r => r.GetByIdsAsync(idArray, It.IsAny<string>()), Times.Once);
             _mockStorage.Verify(s => s.GetByPath(It.IsAny<string>()), Times.Never);
 
             result.ShouldBeAssignableTo<NotFoundResult>();
@@ -199,12 +191,12 @@ namespace Tests.Unit.Controllers
             List<Archive> archives = new() { new ArchiveBuilder().Build() };
             List<int> notFoundIds = new() { };
 
-            _mockRepository.Setup(r => r.GetByIdsAsync(It.IsAny<int[]>())).ReturnsAsync((archives, notFoundIds));
+            _mockArchiveRepository.Setup(r => r.GetByIdsAsync(It.IsAny<Guid[]>(), It.IsAny<string>())).ReturnsAsync((archives));
             _mockStorage.Setup(s => s.GetByPath(It.IsAny<string>())).Returns(notFoundStream);
 
             var result = await _controller.DownloadZip("1");
 
-            _mockRepository.Verify(r => r.GetByIdsAsync(It.IsAny<int[]>()), Times.Once);
+            _mockArchiveRepository.Verify(r => r.GetByIdsAsync(It.IsAny<Guid[]>(), It.IsAny<string>()), Times.Once);
             _mockStorage.Verify(s => s.GetByPath(It.IsAny<string>()), Times.Once);
 
             var statusCodeResult = Assert.IsType<ObjectResult>(result);
@@ -216,17 +208,17 @@ namespace Tests.Unit.Controllers
         public async void DownloadZip_WhenArchivesAreInRepositoryAndStreamsAreInStorage_ReturnsFileStreamResult()
         {
             string idString = "5, 6";
-            int[] idArray = new int[] { 5, 6 };
+            Guid[] idArray = new Guid[] { Guid.NewGuid() };
             List<Archive> archives = new() { new ArchiveBuilder().SetId(5).SetPath("path").Build() };
             List<int> notFoundIds = new() { 6 };
             byte[] downloadZip = await CreateZipDataClone(archives);
 
-            _mockRepository.Setup(r => r.GetByIdsAsync(It.IsAny<int[]>())).ReturnsAsync((archives, notFoundIds));
+            _mockArchiveRepository.Setup(r => r.GetByIdsAsync(It.IsAny<Guid[]>(), It.IsAny<string>())).ReturnsAsync((archives));
             _mockStorage.Setup(s => s.GetByPath(It.IsAny<string>())).Returns(new MemoryStream(new byte[255]));
 
             var result = await _controller.DownloadZip(idString);
 
-            _mockRepository.Verify(r => r.GetByIdsAsync(idArray), Times.Once);
+            _mockArchiveRepository.Verify(r => r.GetByIdsAsync(idArray, It.IsAny<string>()), Times.Once);
             _mockStorage.Verify(s => s.GetByPath("path"), Times.Once);
 
             result.ShouldBeAssignableTo<FileContentResult>();
@@ -242,12 +234,12 @@ namespace Tests.Unit.Controllers
         {
             IEnumerable<IFormFile>? files = null;
 
-            _mockRepository.Setup(r => r.SaveAsync(It.IsAny<Archive>())).
+            _mockArchiveRepository.Setup(r => r.SaveAsync(It.IsAny<Archive>())).
             ReturnsAsync((Archive archive) => archive);
 
             var result = await _controller.Upload(files);
 
-            _mockRepository.Verify(r => r.GetByIdsAsync(It.IsAny<int[]>()), Times.Never);
+            _mockArchiveRepository.Verify(r => r.GetByIdsAsync(It.IsAny<Guid[]>(), It.IsAny<string>()), Times.Never);
             _mockStorage.Verify(s => s.GetByPath(It.IsAny<string>()), Times.Never);
 
             result.ShouldBeAssignableTo<BadRequestResult>();
@@ -271,16 +263,16 @@ namespace Tests.Unit.Controllers
             var archives = new List<Archive>();
             foreach (IFormFile file in files)
             {
-                archives.Add(new(file.FileName, file.ContentType, file.Length, "path"));
+                archives.Add(new(file.FileName, file.ContentType, file.Length, "path", new User()));
             }
 
-            _mockRepository.Setup(r => r.SaveAsync(It.IsAny<Archive>())).
+            _mockArchiveRepository.Setup(r => r.SaveAsync(It.IsAny<Archive>())).
                 ReturnsAsync((Archive archive) => archive);
             _mockStorage.Setup(s => s.Store(It.IsAny<Stream>())).Returns("path");
 
             var result = await _controller.Upload(files);
 
-            _mockRepository.Verify(r => r.SaveAsync(It.IsAny<Archive>()), Times.Exactly(2));
+            _mockArchiveRepository.Verify(r => r.SaveAsync(It.IsAny<Archive>()), Times.Exactly(2));
             _mockStorage.Verify(s => s.Store(It.IsAny<Stream>()), Times.Exactly(2));
 
             result.ShouldBeAssignableTo<OkObjectResult>();
@@ -296,26 +288,15 @@ namespace Tests.Unit.Controllers
         }
 
         [Fact]
-        public async void Delete_WhenIdIsMinusThanOne_ReturnsBadRequest()
-        {
-            IActionResult result = await _controller.Delete(-1);
-
-            _mockRepository.Verify(r => r.GetByIdAsync(It.IsAny<int>()), Times.Never);
-            _mockStorage.Verify(s => s.Delete(It.IsAny<string>()), Times.Never);
-
-            result.ShouldBeAssignableTo<BadRequestResult>();
-        }
-
-        [Fact]
         public async void Delete_WhenArchiveIsNotInRepository_ReturnsNotFound()
         {
-            int id = 100;
+            Guid id = Guid.NewGuid();
             Archive? archive = null;
-            _mockRepository.Setup(r => r.GetByIdAsync(It.IsAny<int>())).ReturnsAsync(archive);
+            _mockArchiveRepository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<string>())).ReturnsAsync(archive);
 
             var result = await _controller.Delete(id);
 
-            _mockRepository.Verify(r => r.GetByIdAsync(id), Times.Once);
+            _mockArchiveRepository.Verify(r => r.GetByIdAsync(id, It.IsAny<string>()), Times.Once);
             _mockStorage.Verify(s => s.Delete(It.IsAny<string>()), Times.Never);
 
             result.ShouldBeAssignableTo<NotFoundResult>();
@@ -324,13 +305,13 @@ namespace Tests.Unit.Controllers
         [Fact]
         public async void Delete_WhenArchiveIsInRepository_ReturnsNoContent()
         {
-            int id = 100;
+            Guid id = Guid.NewGuid();
             Archive? archive = new ArchiveBuilder().Build();
-            _mockRepository.Setup(r => r.GetByIdAsync(It.IsAny<int>())).ReturnsAsync(archive);
+            _mockArchiveRepository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<string>())).ReturnsAsync(archive);
 
             var result = await _controller.Delete(id);
 
-            _mockRepository.Verify(r => r.GetByIdAsync(id), Times.Once);
+            _mockArchiveRepository.Verify(r => r.GetByIdAsync(id, It.IsAny<string>()), Times.Once);
             _mockStorage.Verify(s => s.Delete(archive.Path), Times.Once);
 
             result.ShouldBeAssignableTo<NoContentResult>();

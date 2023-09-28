@@ -6,15 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers
 {
-    public interface IUserRepository
-    {
-        List<User> GetAllAsync();
-        User GetByIdAsync(string id);
-        User GetByNameAsync(string name);
-        User UpdateAsync(string id);
-        User DeleteAsync(string id);
-    }
-
     [ApiController]
     [Route("[controller]")]
     public class UsersController : Controller
