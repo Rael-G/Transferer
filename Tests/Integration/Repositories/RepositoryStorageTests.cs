@@ -2,9 +2,12 @@
 using Api.Data.Contexts;
 using Api.Data.Interfaces;
 using Api.Data.Repositories;
+using Api.Extensions;
 using Api.Models;
+using Api.Models.ViewModels;
 using Bogus;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualStudio.TestPlatform.Utilities;
@@ -16,6 +19,7 @@ using System.IO.Abstractions;
 using System.IO.Abstractions.TestingHelpers;
 using System.Linq;
 using System.Net.Mime;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit.Abstractions;
@@ -27,7 +31,9 @@ namespace Tests.Integration.Repositories
         private readonly LocalFileStorage _fileStorage;
         private readonly ArchivesController _controller;
         private readonly IArchiveRepository _archiveRepository;
-        private readonly IUserRepository _userRepository;
+        private readonly Mock<UserManager<User>> _mockUserManager;
+        private readonly Mock<ClaimsPrincipal> _mockClaimsPrincipal;
+        private readonly Mock<HttpContext> _mockHttpContext;
 
         public RepositoryStorageTests()
         {
@@ -35,36 +41,46 @@ namespace Tests.Integration.Repositories
             .UseInMemoryDatabase(databaseName: "InMemoryTestDatabase")
             .Options);
             var tempPath = Path.Combine(Path.GetTempPath(), "tests");
+            var userIdClaim = new Claim("UserId", "12345");
 
             _fileStorage = new LocalFileStorage(tempPath);
             _archiveRepository = new ArchiveRepository(context);
-            _userRepository = new UserRepository();
-
-            _controller = new ArchivesController(_archiveRepository, _fileStorage, _userRepository);
+            _mockUserManager = new Mock<UserManager<User>>(
+                Mock.Of<IUserStore<User>>(), null, null, null, null, null, null, null, null);
+            _mockClaimsPrincipal = new Mock<ClaimsPrincipal>();
+            _mockHttpContext = new Mock<HttpContext>();
+            _controller = new ArchivesController(_archiveRepository, _fileStorage, _mockUserManager.Object);
         }
 
         [Fact]
         public async Task UploadAndDownload_FileExists_ReturnsFileContent()
         {
-            Guid Id;
+            Guid archiveId;
+            string userId = Guid.NewGuid().ToString();
+            User user = new User() { Id = userId, Archives = new() };
             string fileName = "testfile.txt";
             string fileContent = "Hello, World!";
+            var userIdClaim = new Claim("UserId", "12345");
             var stream = new MemoryStream(Encoding.UTF8.GetBytes(fileContent));
-            var files = new List<IFormFile> 
-            { 
+            var files = new List<IFormFile>
+            {
                 new FormFile(stream, 0, stream.Length, "file", fileName)
                 {
                     Headers = new HeaderDictionary(),
-                    ContentType = "text/plain" 
-                } 
+                    ContentType = "text/plain"
+                }
             };
+
+
+            SetupClaim(userId);
+            _mockUserManager.Setup(u => u.FindByIdAsync(It.IsAny<string>())).ReturnsAsync(user);
 
             var uploadResponse = await _controller.Upload(files);
             var uploadedArchive = (Assert.IsType<OkObjectResult>(uploadResponse).Value as List<Archive>).First();
-            
-            Id = uploadedArchive.Id.Value;
-            
-            var downloadResponse = await _controller.Download(Id);
+
+            archiveId = uploadedArchive.Id.Value;
+
+            var downloadResponse = await _controller.Download(archiveId);
             var fileResult = Assert.IsType<FileStreamResult>(downloadResponse);
 
             using var downloadStream = new MemoryStream();
@@ -74,6 +90,22 @@ namespace Tests.Integration.Repositories
             var downloadedContent = Encoding.UTF8.GetString(downloadedBytes);
 
             Assert.Equal(fileContent, downloadedContent);
+        }
+
+        //Auxiliary
+
+        public void SetupClaim(string userId)
+        {
+            _mockClaimsPrincipal.Setup(c => c.Claims).Returns(new List<Claim>
+            {
+                new Claim("UserId", userId)
+            });
+
+            _mockHttpContext.Setup(h => h.User).Returns(_mockClaimsPrincipal.Object);
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = _mockHttpContext.Object,
+            };
         }
     }
 }

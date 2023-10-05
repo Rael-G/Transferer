@@ -58,8 +58,5 @@ namespace Api.Controllers
             // || Claim.Role == "admin"
             return NoContent();
         }
-
-
-
     }
 }

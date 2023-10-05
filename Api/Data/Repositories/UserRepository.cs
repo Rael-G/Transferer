@@ -1,33 +1,50 @@
 ﻿using Api.Data.Interfaces;
 using Api.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace Api.Data.Repositories
 {
     public class UserRepository : IUserRepository
     {
-        public List<User> GetAllAsync()
+        private readonly UserManager<User> _userManager;
+
+        public UserRepository(UserManager<User> userManager) 
         {
-            throw new NotImplementedException();
+            _userManager = userManager;
         }
 
-        public User GetByIdAsync(string id)
+        public async Task<List<User>> GetAllAsync()
         {
-            throw new NotImplementedException();
+            return await _userManager.Users.ToListAsync();
         }
 
-        public User GetByNameAsync(string name)
+        public async Task<User?> GetByIdAsync(string id)
         {
-            throw new NotImplementedException();
+            return await _userManager.FindByIdAsync(id);
         }
 
-        public User UpdateAsync(string id)
+        public async Task<User?> GetByNameAsync(string name)
         {
-            throw new NotImplementedException();
+            return await _userManager.FindByNameAsync(name);
         }
 
-        public User DeleteAsync(string id)
+        public async Task UpdateAsync(User user)
         {
-            throw new NotImplementedException();
+            await _userManager.UpdateAsync(user);
+        }
+
+        public async Task DeleteAsync(string id)
+        {
+            var user = await GetByIdAsync(id);
+
+            await _userManager.DeleteAsync(user);
+        }
+
+        public string GetUserIdByClaim()
+        {
+            return ClaimsPrincipal.Current.Claims.FirstOrDefault(c => c.Type == "UserId").Value;
         }
     }
 }

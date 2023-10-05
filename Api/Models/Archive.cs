@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace Api.Models
 {
@@ -26,6 +27,7 @@ namespace Api.Models
         public string? UserId { get; private set; }
 
         [Required]
+        [JsonIgnore]
         public User? User { get; private set; }
 
         public Archive()

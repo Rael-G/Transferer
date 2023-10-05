@@ -1,13 +1,15 @@
 ﻿using Api.Models;
+using System.Security.Claims;
 
 namespace Api.Data.Interfaces
 {
     public interface IUserRepository
     {
-        List<User> GetAllAsync();
-        User GetByIdAsync(string id);
-        User GetByNameAsync(string name);
-        User UpdateAsync(string id);
-        User DeleteAsync(string id);
+        Task<List<User>> GetAllAsync();
+        Task<User?> GetByIdAsync(string id);
+        Task<User?> GetByNameAsync(string name);
+        Task UpdateAsync(User user);
+        Task DeleteAsync(string id);
+        string GetUserIdByClaim(); 
     }
 }

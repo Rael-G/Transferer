@@ -10,6 +10,6 @@ namespace Api.Data.Interfaces
         Task<List<Archive>> GetByIdsAsync(Guid[] ids, string userId);
         Task<List<Archive>?> GetByNameAsync(string name, string userId);
         Task<Archive> SaveAsync(Archive archive);
-        Task<bool> DeleteAsync(Guid id, string userId);
+        Task DeleteAsync(Guid id, string userId);
     }
 }

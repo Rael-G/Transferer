@@ -52,7 +52,6 @@ namespace Api
                     ValidateAudience = false
                 };
             });
-
             services.AddIdentity<User, IdentityRole>()
                 .AddEntityFrameworkStores<TransfererDbContext>()
                 .AddDefaultTokenProviders();

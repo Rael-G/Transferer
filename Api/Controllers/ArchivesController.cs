@@ -1,9 +1,12 @@
 ﻿using Api.Data.Interfaces;
+using Api.Extensions;
 using Api.Models;
+using Api.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.IO.Compression;
+using System.Security.Claims;
 
 namespace Api.Controllers
 {
@@ -13,21 +16,22 @@ namespace Api.Controllers
     {
         private readonly IArchiveRepository _archiveRepository;
         private readonly IFileStorage _fileStorage;
-        private readonly IUserRepository _userRepository;
+        private readonly UserManager<User> _userManager;
 
         public ArchivesController(IArchiveRepository repository, 
-            IFileStorage storage, IUserRepository userRepository)
+            IFileStorage storage, UserManager<User> userManager)
         {
             _archiveRepository = repository;
             _fileStorage = storage;
-            _userRepository = userRepository;
+            _userManager = userManager;
         }
 
         [Authorize(AuthenticationSchemes = "Bearer")]
         [HttpGet("list")]
         public async Task<IActionResult> List()
         {
-            var userId = User.Claims.FirstOrDefault(c => c.Type == "UserId").Value;
+
+            var userId = _userManager.GetUserIdFromClaims(User);
             if (userId == null)
             {
                 return StatusCode(500, "Claim.UserId not found");
@@ -56,7 +60,7 @@ namespace Api.Controllers
                 return BadRequest(string.Empty);
             }
 
-            var userId = User.Claims.FirstOrDefault(c => c.Type == "UserId").Value;
+            var userId = _userManager.GetUserIdFromClaims(User);
             if (userId == null)
             {
                 return StatusCode(500, "Claim.UserId not found");
@@ -71,7 +75,7 @@ namespace Api.Controllers
         [HttpGet("download/{id}")]
         public async Task<IActionResult> Download(Guid id)
         {
-            var userId = User.Claims.FirstOrDefault(c => c.Type == "UserId").Value;
+            var userId = _userManager.GetUserIdFromClaims(User);
             if (userId == null)
             {
                 return StatusCode(500, "Claim.UserId not found");
@@ -102,7 +106,7 @@ namespace Api.Controllers
                 return BadRequest(id);
             }
 
-            var userId = User.Claims.FirstOrDefault(c => c.Type == "UserId").Value;
+            var userId = _userManager.GetUserIdFromClaims(User);
             if (userId == null)
             {
                 return StatusCode(500, "Claim.UserId not found");
@@ -127,13 +131,13 @@ namespace Api.Controllers
             if (files == null || !files.Any())
                 return BadRequest();
 
-            var userId = User.Claims.FirstOrDefault(c => c.Type == "UserId").Value;
+            var userId = _userManager.GetUserIdFromClaims(User);
             if (userId == null)
             {
                 return StatusCode(500, "Claim.UserId not found");
             }
 
-            var user = _userRepository.GetByIdAsync(userId);
+            var user = await _userManager.FindByIdAsync(userId);
 
             List<Archive> archives = new();
 
@@ -142,10 +146,11 @@ namespace Api.Controllers
                 Stream stream = file.OpenReadStream();
                 string filePath = _fileStorage.Store(stream);
                 var archive = new Archive(file.FileName, file.ContentType, file.Length, filePath, user);
-                archives.Add(await _archiveRepository.SaveAsync(archive));
+                await _archiveRepository.SaveAsync(archive);
+                archives.Add(archive);
                 user.Archives.Add(archive);
-
             }
+            await _userManager.UpdateAsync(user);
             return Ok(archives);
         }
 
@@ -153,7 +158,8 @@ namespace Api.Controllers
         [HttpDelete("delete/{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var userId = User.Claims.FirstOrDefault(c => c.Type == "UserId").Value;
+
+            var userId = _userManager.GetUserIdFromClaims(User);
             if (userId == null)
             {
                 return StatusCode(500, "Claim.UserId not found");
@@ -165,6 +171,10 @@ namespace Api.Controllers
 
             _fileStorage.Delete(archive.Path);
             await _archiveRepository.DeleteAsync(id, userId);
+
+            var user = await _userManager.FindByIdAsync(userId);
+            user.Archives.RemoveAll(a => a.Id == archive.Id);
+            _userManager.UpdateAsync(user);
 
             return NoContent();
         }
@@ -195,8 +205,6 @@ namespace Api.Controllers
             }
             return memoryStream.ToArray();
         }
-
     }
-
 }
 

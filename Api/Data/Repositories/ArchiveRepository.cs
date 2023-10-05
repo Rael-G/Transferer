@@ -70,17 +70,12 @@ namespace Api.Data.Repositories
             return archive;
         }
 
-        public async Task<bool> DeleteAsync(Guid id, string userId)
+        public async Task DeleteAsync(Guid id, string userId)
         {
             var archive = await GetByIdAsync(id, userId);
-            if (archive == null)
-            {
-                return false;
-            }
 
             _context.Archives.Remove(archive);
             await _context.SaveChangesAsync();
-            return true;
         }
     }
 }

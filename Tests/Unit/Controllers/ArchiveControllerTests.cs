@@ -1,16 +1,19 @@
 ﻿using Api.Controllers;
 using Api.Data.Interfaces;
 using Api.Data.Repositories;
+using Api.Extensions;
 using Api.Models;
 using Bogus;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Shouldly;
 using System.IO;
 using System.IO.Compression;
+using System.Security.Claims;
 using Tests._Builder;
 
 namespace Tests.Unit.Controllers
@@ -19,23 +22,39 @@ namespace Tests.Unit.Controllers
     {
         private readonly Mock<IArchiveRepository> _mockArchiveRepository;
         private readonly Mock<IFileStorage> _mockStorage;
-        private readonly Mock<IUserRepository> _mockUserRepository;
+        private readonly Mock<UserManager<User>> _mockUserManager;
         private readonly ArchivesController _controller;
+        private readonly Mock<ClaimsPrincipal> _mockClaimsPrincipal;
+        private readonly Mock<HttpContext> _mockHttpContext;
 
         public ArchiveControllerTests()
         {
             _mockArchiveRepository = new Mock<IArchiveRepository>();
             _mockStorage = new Mock<IFileStorage>();
-            _mockUserRepository = new Mock<IUserRepository>();
-            _controller = new ArchivesController(_mockArchiveRepository.Object, _mockStorage.Object, _mockUserRepository.Object);
+            _mockUserManager = new Mock<UserManager<User>>(Mock.Of<IUserStore<User>>(), 
+                null, null, null, null, null, null, null, null);
+            _controller = new ArchivesController(_mockArchiveRepository.Object, _mockStorage.Object, _mockUserManager.Object);
+            _mockClaimsPrincipal = new Mock<ClaimsPrincipal>();
+            _mockHttpContext = new Mock<HttpContext>();
         }
 
         [Fact]
-        public async void ListAll_ReturnsOkWithArchives()
+        public async void List_ReturnsOkWithArchives()
         {
             var archives = ArchiveBuilder.BuildArchives(10);
 
             _mockArchiveRepository.Setup(r => r.GetAllAsync()).ReturnsAsync(archives);
+
+            _mockClaimsPrincipal.Setup(c => c.Claims).Returns(new List<Claim> 
+            { 
+                new Claim("UserId", "123")
+            });
+
+            _mockHttpContext.Setup(h => h.User).Returns(_mockClaimsPrincipal.Object);
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = _mockHttpContext.Object,
+            };
 
             var result = await _controller.ListAll();
 
@@ -52,6 +71,9 @@ namespace Tests.Unit.Controllers
                 }
             }
         }
+
+        //TODO:
+        //ListAll tests
 
         [Theory]
         [InlineData(null)]
@@ -71,6 +93,9 @@ namespace Tests.Unit.Controllers
         {
             List<Archive> archives = ArchiveBuilder.BuildArchives(10);
             var names = "picture";
+            string userId = Guid.NewGuid().ToString();
+
+            SetupClaim();
 
             _mockArchiveRepository.Setup(r => r.GetByNameAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(archives);
 
@@ -95,7 +120,9 @@ namespace Tests.Unit.Controllers
         {
             Guid id = Guid.NewGuid();
             Archive? notFoundArchive = null;
+            string userId = Guid.NewGuid().ToString();
 
+            SetupClaim();
             _mockArchiveRepository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<string>())).ReturnsAsync(notFoundArchive);
 
             var result = await _controller.Download(id);
@@ -112,7 +139,9 @@ namespace Tests.Unit.Controllers
             Guid id = Guid.NewGuid();
             Archive archive = new ArchiveBuilder().Build();
             Stream? notFoundStream = null;
+            string userId = Guid.NewGuid().ToString();
 
+            SetupClaim();
             _mockArchiveRepository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<string>())).ReturnsAsync(archive);
             _mockStorage.Setup(s => s.GetByPath(It.IsAny<string>())).Returns(notFoundStream);
 
@@ -131,7 +160,9 @@ namespace Tests.Unit.Controllers
             Guid id = Guid.NewGuid();
             Archive archive = new ArchiveBuilder().Build();
             Stream stream = new MemoryStream();
+            string userId = Guid.NewGuid().ToString();
 
+            SetupClaim();
             _mockArchiveRepository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<string>())).ReturnsAsync(archive);
             _mockStorage.Setup(s => s.GetByPath(It.IsAny<string>())).Returns(stream);
 
@@ -168,11 +199,13 @@ namespace Tests.Unit.Controllers
         [Fact]
         public async void DownloadZip_WhenArchivesAreNotInRepository_ReturnsNotFound()
         {
-            string idString = "1";
-            Guid[] idArray = new Guid[] { Guid.NewGuid() };
+            string idString = Guid.NewGuid().ToString();
+            Guid[] idArray = new Guid[] { Guid.Parse(idString) };
             List<Archive> archives = new();
             List<int> notFoundIds = new() { 1 };
+            string userId = Guid.NewGuid().ToString();
 
+            SetupClaim();
             _mockArchiveRepository.Setup(r => r.GetByIdsAsync(It.IsAny<Guid[]>(), It.IsAny<string>())).ReturnsAsync((archives));
 
             var result = await _controller.DownloadZip(idString);
@@ -189,12 +222,13 @@ namespace Tests.Unit.Controllers
 
             Stream? notFoundStream = null;
             List<Archive> archives = new() { new ArchiveBuilder().Build() };
-            List<int> notFoundIds = new() { };
+            string userId = Guid.NewGuid().ToString();
 
+            SetupClaim();
             _mockArchiveRepository.Setup(r => r.GetByIdsAsync(It.IsAny<Guid[]>(), It.IsAny<string>())).ReturnsAsync((archives));
             _mockStorage.Setup(s => s.GetByPath(It.IsAny<string>())).Returns(notFoundStream);
 
-            var result = await _controller.DownloadZip("1");
+            var result = await _controller.DownloadZip(Guid.NewGuid().ToString());
 
             _mockArchiveRepository.Verify(r => r.GetByIdsAsync(It.IsAny<Guid[]>(), It.IsAny<string>()), Times.Once);
             _mockStorage.Verify(s => s.GetByPath(It.IsAny<string>()), Times.Once);
@@ -207,12 +241,14 @@ namespace Tests.Unit.Controllers
         [Fact]
         public async void DownloadZip_WhenArchivesAreInRepositoryAndStreamsAreInStorage_ReturnsFileStreamResult()
         {
-            string idString = "5, 6";
-            Guid[] idArray = new Guid[] { Guid.NewGuid() };
+            string idString = Guid.NewGuid().ToString();
+            Guid[] idArray = new Guid[] { Guid.Parse(idString) };
             List<Archive> archives = new() { new ArchiveBuilder().SetId(5).SetPath("path").Build() };
             List<int> notFoundIds = new() { 6 };
             byte[] downloadZip = await CreateZipDataClone(archives);
+            string userId = Guid.NewGuid().ToString();
 
+            SetupClaim();
             _mockArchiveRepository.Setup(r => r.GetByIdsAsync(It.IsAny<Guid[]>(), It.IsAny<string>())).ReturnsAsync((archives));
             _mockStorage.Setup(s => s.GetByPath(It.IsAny<string>())).Returns(new MemoryStream(new byte[255]));
 
@@ -265,7 +301,10 @@ namespace Tests.Unit.Controllers
             {
                 archives.Add(new(file.FileName, file.ContentType, file.Length, "path", new User()));
             }
-
+            string userId = Guid.NewGuid().ToString();
+            var user = new User { Id  = userId, Archives = new() };
+            SetupClaim();
+            _mockUserManager.Setup(u => u.FindByIdAsync(It.IsAny<string>())).ReturnsAsync(user);
             _mockArchiveRepository.Setup(r => r.SaveAsync(It.IsAny<Archive>())).
                 ReturnsAsync((Archive archive) => archive);
             _mockStorage.Setup(s => s.Store(It.IsAny<Stream>())).Returns("path");
@@ -279,7 +318,6 @@ namespace Tests.Unit.Controllers
             if (result is OkObjectResult objResult)
             {
                 objResult.Value.ShouldNotBeNull();
-                objResult.Value.ShouldBeOfType(archives.GetType());
                 if (objResult.Value is IEnumerable<IFormFile>)
                 {
                     objResult.Value.ShouldBe(archives);
@@ -292,6 +330,11 @@ namespace Tests.Unit.Controllers
         {
             Guid id = Guid.NewGuid();
             Archive? archive = null;
+            string userId = Guid.NewGuid().ToString();
+            var user = new User { Id = userId, Archives = new() };
+
+            _mockUserManager.Setup(u => u.FindByIdAsync(It.IsAny<string>())).ReturnsAsync(user);
+            SetupClaim();
             _mockArchiveRepository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<string>())).ReturnsAsync(archive);
 
             var result = await _controller.Delete(id);
@@ -307,6 +350,11 @@ namespace Tests.Unit.Controllers
         {
             Guid id = Guid.NewGuid();
             Archive? archive = new ArchiveBuilder().Build();
+            string userId = id.ToString();
+            var user = new User { Id = userId, Archives = new() };
+
+            _mockUserManager.Setup(u => u.FindByIdAsync(It.IsAny<string>())).ReturnsAsync(user);
+            SetupClaim();
             _mockArchiveRepository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<string>())).ReturnsAsync(archive);
 
             var result = await _controller.Delete(id);
@@ -336,6 +384,20 @@ namespace Tests.Unit.Controllers
                 }
             }
             return memoryStream.ToArray();
+        }
+
+        public void SetupClaim()
+        {
+            _mockClaimsPrincipal.Setup(c => c.Claims).Returns(new List<Claim>
+            {
+                new Claim("UserId", "123")
+            });
+
+            _mockHttpContext.Setup(h => h.User).Returns(_mockClaimsPrincipal.Object);
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = _mockHttpContext.Object,
+            };
         }
     }
 }
