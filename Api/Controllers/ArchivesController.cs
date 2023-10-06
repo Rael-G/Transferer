@@ -38,8 +38,9 @@ namespace Api.Controllers
             }
 
             var archives = await _archiveRepository.GetAllAsync(userId);
+            var archivesViewModel = ArchiveViewModel.MapArchivesToViewModel(archives);
 
-            return Ok(archives);
+            return Ok(archivesViewModel);
         }
 
         [Authorize(AuthenticationSchemes = "Bearer", Roles = "admin")]
@@ -47,8 +48,9 @@ namespace Api.Controllers
         public async Task<IActionResult> ListAll()
         {
             var archives = await _archiveRepository.GetAllAsync();
+            var archivesViewModel = ArchiveViewModel.MapArchivesToViewModel(archives);
 
-            return Ok(archives);
+            return Ok(archivesViewModel);
         }
 
         [Authorize(AuthenticationSchemes = "Bearer")]
@@ -67,8 +69,9 @@ namespace Api.Controllers
             }
 
             var archives = await _archiveRepository.GetByNameAsync(name, userId);
+            var archivesViewModel = ArchiveViewModel.MapArchivesToViewModel(archives);
 
-            return Ok(archives);
+            return Ok(archivesViewModel);
         }
 
         [Authorize(AuthenticationSchemes = "Bearer")]
@@ -139,7 +142,7 @@ namespace Api.Controllers
 
             var user = await _userManager.FindByIdAsync(userId);
 
-            List<Archive> archives = new();
+            List<ArchiveViewModel> archives = new();
 
             foreach (var file in files)
             {
@@ -147,7 +150,7 @@ namespace Api.Controllers
                 string filePath = _fileStorage.Store(stream);
                 var archive = new Archive(file.FileName, file.ContentType, file.Length, filePath, user);
                 await _archiveRepository.SaveAsync(archive);
-                archives.Add(archive);
+                archives.Add(new ArchiveViewModel(archive));
                 user.Archives.Add(archive);
             }
             await _userManager.UpdateAsync(user);

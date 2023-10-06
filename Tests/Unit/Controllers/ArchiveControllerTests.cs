@@ -3,6 +3,7 @@ using Api.Data.Interfaces;
 using Api.Data.Repositories;
 using Api.Extensions;
 using Api.Models;
+using Api.Models.ViewModels;
 using Bogus;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Http;
@@ -24,8 +25,6 @@ namespace Tests.Unit.Controllers
         private readonly Mock<IFileStorage> _mockStorage;
         private readonly Mock<UserManager<User>> _mockUserManager;
         private readonly ArchivesController _controller;
-        private readonly Mock<ClaimsPrincipal> _mockClaimsPrincipal;
-        private readonly Mock<HttpContext> _mockHttpContext;
 
         public ArchiveControllerTests()
         {
@@ -34,8 +33,6 @@ namespace Tests.Unit.Controllers
             _mockUserManager = new Mock<UserManager<User>>(Mock.Of<IUserStore<User>>(), 
                 null, null, null, null, null, null, null, null);
             _controller = new ArchivesController(_mockArchiveRepository.Object, _mockStorage.Object, _mockUserManager.Object);
-            _mockClaimsPrincipal = new Mock<ClaimsPrincipal>();
-            _mockHttpContext = new Mock<HttpContext>();
         }
 
         [Fact]
@@ -45,17 +42,6 @@ namespace Tests.Unit.Controllers
 
             _mockArchiveRepository.Setup(r => r.GetAllAsync()).ReturnsAsync(archives);
 
-            _mockClaimsPrincipal.Setup(c => c.Claims).Returns(new List<Claim> 
-            { 
-                new Claim("UserId", "123")
-            });
-
-            _mockHttpContext.Setup(h => h.User).Returns(_mockClaimsPrincipal.Object);
-            _controller.ControllerContext = new ControllerContext
-            {
-                HttpContext = _mockHttpContext.Object,
-            };
-
             var result = await _controller.ListAll();
 
             _mockArchiveRepository.Verify(r => r.GetAllAsync(), Times.Once);
@@ -64,7 +50,7 @@ namespace Tests.Unit.Controllers
             if (result is OkObjectResult objResult)
             {
                 objResult.Value.ShouldNotBeNull();
-                objResult.Value.ShouldBeOfType(archives.GetType());
+                objResult.Value.ShouldBeOfType(typeof(List<ArchiveViewModel>));
                 if (objResult.Value is List<Archive>)
                 {
                     objResult.Value.ShouldBe(archives);
@@ -107,7 +93,7 @@ namespace Tests.Unit.Controllers
             if (result is OkObjectResult objResult)
             {
                 objResult.Value.ShouldNotBeNull();
-                objResult.Value.ShouldBeOfType(archives.GetType());
+                objResult.Value.ShouldBeOfType(typeof(List<ArchiveViewModel>));
                 if (objResult.Value is List<Archive>)
                 {
                     objResult.Value.ShouldBe(archives);
@@ -388,15 +374,18 @@ namespace Tests.Unit.Controllers
 
         public void SetupClaim()
         {
-            _mockClaimsPrincipal.Setup(c => c.Claims).Returns(new List<Claim>
+
+            var mockClaimsPrincipal = new Mock<ClaimsPrincipal>();
+            var mockHttpContext = new Mock<HttpContext>();
+            mockClaimsPrincipal.Setup(c => c.Claims).Returns(new List<Claim>
             {
                 new Claim("UserId", "123")
             });
 
-            _mockHttpContext.Setup(h => h.User).Returns(_mockClaimsPrincipal.Object);
+            mockHttpContext.Setup(h => h.User).Returns(mockClaimsPrincipal.Object);
             _controller.ControllerContext = new ControllerContext
             {
-                HttpContext = _mockHttpContext.Object,
+                HttpContext = mockHttpContext.Object,
             };
         }
     }

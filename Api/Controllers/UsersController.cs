@@ -8,7 +8,7 @@ namespace Api.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class UsersController : Controller
+    public class UsersController : ControllerBase
     {
         private readonly UserManager<User> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
@@ -21,16 +21,14 @@ namespace Api.Controllers
         }
 
         [Authorize(AuthenticationSchemes = "Bearer", Roles = "admin")]
-        [HttpPut("list")]
-        public IActionResult ListAll()
-        {
-            return Ok();
-        }
-
-        [Authorize(AuthenticationSchemes = "Bearer", Roles = "admin")]
         [HttpPut("search")]
-        public IActionResult Search()
+        public async Task<IActionResult> Search(string name)
         {
+            if (string.IsNullOrEmpty(name))
+            {
+                return BadRequest(name);
+            }
+            //var user = await _userManager.FindByNameAsync(name);
             return Ok();
         }
 

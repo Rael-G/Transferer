@@ -1,8 +1,11 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
 namespace Api.Models
 {
+    [Index(nameof(FileName), IsUnique = true)]
     public class Archive
     {
         [Key]

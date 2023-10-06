@@ -32,23 +32,18 @@ namespace Tests.Integration.Repositories
         private readonly ArchivesController _controller;
         private readonly IArchiveRepository _archiveRepository;
         private readonly Mock<UserManager<User>> _mockUserManager;
-        private readonly Mock<ClaimsPrincipal> _mockClaimsPrincipal;
-        private readonly Mock<HttpContext> _mockHttpContext;
 
         public RepositoryStorageTests()
         {
             var context = new TransfererDbContext(new DbContextOptionsBuilder<TransfererDbContext>()
-            .UseInMemoryDatabase(databaseName: "InMemoryTestDatabase")
-            .Options);
+                .UseInMemoryDatabase(databaseName: "InMemoryTestDatabase")
+                .Options);
             var tempPath = Path.Combine(Path.GetTempPath(), "tests");
-            var userIdClaim = new Claim("UserId", "12345");
 
             _fileStorage = new LocalFileStorage(tempPath);
             _archiveRepository = new ArchiveRepository(context);
             _mockUserManager = new Mock<UserManager<User>>(
                 Mock.Of<IUserStore<User>>(), null, null, null, null, null, null, null, null);
-            _mockClaimsPrincipal = new Mock<ClaimsPrincipal>();
-            _mockHttpContext = new Mock<HttpContext>();
             _controller = new ArchivesController(_archiveRepository, _fileStorage, _mockUserManager.Object);
         }
 
@@ -60,7 +55,6 @@ namespace Tests.Integration.Repositories
             User user = new User() { Id = userId, Archives = new() };
             string fileName = "testfile.txt";
             string fileContent = "Hello, World!";
-            var userIdClaim = new Claim("UserId", "12345");
             var stream = new MemoryStream(Encoding.UTF8.GetBytes(fileContent));
             var files = new List<IFormFile>
             {
@@ -76,9 +70,9 @@ namespace Tests.Integration.Repositories
             _mockUserManager.Setup(u => u.FindByIdAsync(It.IsAny<string>())).ReturnsAsync(user);
 
             var uploadResponse = await _controller.Upload(files);
-            var uploadedArchive = (Assert.IsType<OkObjectResult>(uploadResponse).Value as List<Archive>).First();
+            var uploadedArchive = (Assert.IsType<OkObjectResult>(uploadResponse).Value as List<ArchiveViewModel>).First();
 
-            archiveId = uploadedArchive.Id.Value;
+            archiveId = Guid.Parse(uploadedArchive.Id);
 
             var downloadResponse = await _controller.Download(archiveId);
             var fileResult = Assert.IsType<FileStreamResult>(downloadResponse);
@@ -96,15 +90,17 @@ namespace Tests.Integration.Repositories
 
         public void SetupClaim(string userId)
         {
-            _mockClaimsPrincipal.Setup(c => c.Claims).Returns(new List<Claim>
+            var mockClaimsPrincipal = new Mock<ClaimsPrincipal>();
+            var mockHttpContext = new Mock<HttpContext>();
+            mockClaimsPrincipal.Setup(c => c.Claims).Returns(new List<Claim>
             {
                 new Claim("UserId", userId)
             });
 
-            _mockHttpContext.Setup(h => h.User).Returns(_mockClaimsPrincipal.Object);
+            mockHttpContext.Setup(h => h.User).Returns(mockClaimsPrincipal.Object);
             _controller.ControllerContext = new ControllerContext
             {
-                HttpContext = _mockHttpContext.Object,
+                HttpContext = mockHttpContext.Object,
             };
         }
     }
