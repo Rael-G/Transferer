@@ -25,7 +25,6 @@
 
         public static User MapToUser(User user, UserViewModel userViewModel)
         {
-            user.Id = userViewModel.Id;
             user.UserName = userViewModel.UserName;
 
             return user;
