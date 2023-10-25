@@ -8,7 +8,7 @@ namespace Api.Models
         [JsonIgnore]
         public List<Archive>? Archives { get; set; }
 
-        public User() 
+        public User() : base()
         {
             Archives = new List<Archive>();
         }
