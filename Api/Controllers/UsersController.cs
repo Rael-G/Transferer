@@ -1,8 +1,12 @@
-﻿using Api.Data.Interfaces;
+﻿using Api.Business.Contracts;
+using Api.Business.Implementation;
+using Api.Data.Interfaces;
 using Api.Models;
+using Api.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Xml.Linq;
 
 namespace Api.Controllers
 {
@@ -10,14 +14,11 @@ namespace Api.Controllers
     [Route("[controller]")]
     public class UsersController : ControllerBase
     {
-        private readonly UserManager<User> _userManager;
-        private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly IUserBusiness _business;
 
-        public UsersController(UserManager<User> userManager, 
-            RoleManager<IdentityRole> roleManager)
+        public UsersController(IUserBusiness business)
         {
-            _userManager = userManager;
-            _roleManager = roleManager;
+            _business = business;  
         }
 
         [Authorize(AuthenticationSchemes = "Bearer", Roles = "admin")]
@@ -28,32 +29,30 @@ namespace Api.Controllers
             {
                 return BadRequest(name);
             }
-            //var user = await _userManager.FindByNameAsync(name);
-            return Ok();
+            var user = await _business.FindByNameAsync(name);
+            return Ok(user);
         }
 
         [Authorize(AuthenticationSchemes = "Bearer")]
         [HttpPut("edit")]
-        public IActionResult Edit()
+        public async Task<IActionResult> Edit(UserViewModel user)
         {
-            //If Claim.UserId == user.Id
-            // || Claim.Role == "admin"
+            var claimId = _business.GetUserIdFromClaims(User);
+            if (claimId != user.Id && !_business.IsInRole("admin", User))
+            {
+                return Unauthorized();
+            }
+            await _business.EditAsync(user);
+
             return NoContent();
         }
 
-        [Authorize(AuthenticationSchemes = "Bearer", Roles = "admin")]
-        [HttpPut("role")]
-        public IActionResult Role()
-        {
-            return NoContent();
-        }
-
-        [Authorize(AuthenticationSchemes = "Bearer")]
+        [Authorize(AuthenticationSchemes = "Bearegitr")]
         [HttpDelete("delete")]
         public IActionResult Remove()
         {
             //If Claim.UserId == user.Id 
-            // || Claim.Role == "admin"
+            // || Claim.Role == "admin" && Claim.UserId != user.Id 
             return NoContent();
         }
     }
