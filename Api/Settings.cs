@@ -27,6 +27,7 @@ namespace Api
 
             services.AddScoped<IArchiveRepository, ArchiveRepository>();
             services.AddScoped<IUserBusiness, UserBusiness>();
+            services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IFileStorage>(provider =>
                 new LocalFileStorage($"{Directory.GetCurrentDirectory()}\\Storage\\Files"));
         }
