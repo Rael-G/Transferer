@@ -1,4 +1,5 @@
 ﻿using Api.Business.Contracts;
+using Api.Data.Interfaces;
 using Api.Models;
 using Api.Models.ViewModels;
 using Microsoft.AspNetCore.Identity;
@@ -8,34 +9,56 @@ namespace Api.Business.Implementation
 {
     public class UserBusiness : IUserBusiness
     {
-        private readonly UserManager<User> _userManager;
-        private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly IUserRepository _repository;
 
-        public UserBusiness(UserManager<User> userManager,
-            RoleManager<IdentityRole> roleManager)
+        public UserBusiness(IUserRepository repository)
         {
-            _userManager = userManager;
-            _roleManager = roleManager;
+            _repository = repository;
         }
 
-        public async Task<List<UserViewModel>> FindByNameAsync(string name)
+        public async Task<List<UserViewModel>> SearchAsync(string name)
         {
-            throw new NotImplementedException();
+            var users = await _repository.GetByNameAsync(name);
+            var usersViewModel = UserViewModel.MapUsersToViewModel(users);
+            return usersViewModel;
         }
 
-        public Task<UserViewModel> EditAsync(UserViewModel id)
+        public async Task<UserViewModel?> EditAsync(UserViewModel userViewModel)
         {
-            throw new NotImplementedException();
+            var user = await _repository.GetByIdAsync(userViewModel.Id);
+            if (user == null)
+            {
+                return null;
+            }
+            UserViewModel.MapToUser(user, userViewModel);
+
+            await _repository.UpdateAsync(user);
+
+            return new UserViewModel(user);
         }
 
-        public Task<UserViewModel> RemoveAsync(string id)
+        public async Task<UserViewModel?> RemoveAsync(string id)
         {
-            throw new NotImplementedException();
+            var user = await _repository.GetByIdAsync(id);
+            if (user == null)
+            {
+                return null;
+            }
+
+            await _repository.DeleteAsync(user.Id);
+
+            return new UserViewModel(user);
         }
 
-        public string GetUserIdFromClaims(ClaimsPrincipal user)
+        public string? GetUserIdFromClaims(ClaimsPrincipal user)
         {
-            return user.Claims.FirstOrDefault(c => c.Type == "UserId").Value;
+            var claim = user.Claims.FirstOrDefault(c => c.Type == "UserId");
+            if (claim != null)
+            {
+                return claim.Value;
+            }
+
+            return null;
         }
 
         public bool IsInRole(string role, ClaimsPrincipal user)

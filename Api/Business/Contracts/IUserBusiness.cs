@@ -5,10 +5,10 @@ namespace Api.Business.Contracts
 {
     public interface IUserBusiness
     {
-        Task<List<UserViewModel>> FindByNameAsync(string name);
-        Task<UserViewModel> EditAsync(UserViewModel id);
-        Task<UserViewModel> RemoveAsync(string id);
-        string GetUserIdFromClaims(ClaimsPrincipal user);
+        Task<List<UserViewModel>> SearchAsync(string name);
+        Task<UserViewModel?> EditAsync(UserViewModel user);
+        Task<UserViewModel?> RemoveAsync(string id);
+        string? GetUserIdFromClaims(ClaimsPrincipal user);
         bool IsInRole(string role, ClaimsPrincipal user);
     }
 }
