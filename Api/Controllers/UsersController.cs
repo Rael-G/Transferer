@@ -29,7 +29,7 @@ namespace Api.Controllers
             {
                 return BadRequest(name);
             }
-            var user = await _business.FindByNameAsync(name);
+            var user = await _business.SearchAsync(name);
             return Ok(user);
         }
 
@@ -37,22 +37,35 @@ namespace Api.Controllers
         [HttpPut("edit")]
         public async Task<IActionResult> Edit(UserViewModel user)
         {
-            var claimId = _business.GetUserIdFromClaims(User);
+            var claimId = _business.GetUserIdFromClaims(User);  
             if (claimId != user.Id && !_business.IsInRole("admin", User))
             {
                 return Unauthorized();
             }
-            await _business.EditAsync(user);
+
+            var updatedUser = await _business.EditAsync(user);
+            if (updatedUser == null)
+            {
+                return NotFound($"User not found. User Id: {user.Id}");
+            }
 
             return NoContent();
         }
 
-        [Authorize(AuthenticationSchemes = "Bearegitr")]
+        [Authorize(AuthenticationSchemes = "Bearer")]
         [HttpDelete("delete")]
-        public IActionResult Remove()
+        public async Task<IActionResult> Remove(string id)
         {
-            //If Claim.UserId == user.Id 
-            // || Claim.Role == "admin" && Claim.UserId != user.Id 
+            var claimId = _business.GetUserIdFromClaims(User);
+            if (claimId != id && !_business.IsInRole("admin", User))
+            {
+                return Unauthorized();
+            }
+            var updatedUser = await _business.RemoveAsync(id);
+            if (updatedUser == null)
+            {
+                return NotFound($"User not found. User Id: {id}");
+            }
             return NoContent();
         }
     }

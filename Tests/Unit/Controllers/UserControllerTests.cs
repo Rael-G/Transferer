@@ -3,6 +3,7 @@ using Api.Controllers;
 using Api.Models;
 using Api.Models.ViewModels;
 using Bogus.DataSets;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Shouldly;
@@ -13,17 +14,11 @@ namespace Tests.Unit.Controllers
 {
     public class UserControllerTests
     {
-        //private readonly Mock<UserManager<User>> _mockUserManager;
-        //private readonly Mock<RoleManager<IdentityRole>> _mockRoleManager;
         private readonly Mock<IUserBusiness> _business;
         private readonly UsersController _controller;
     
         public UserControllerTests()
         {
-            //_mockRoleManager =  new Mock<RoleManager<IdentityRole>>(
-            //             Mock.Of<IRoleStore<IdentityRole>>(), null, null, null, null);
-            //_mockUserManager = new Mock<UserManager<User>>(
-            //    Mock.Of<IUserStore<User>>(), null, null, null, null, null, null, null, null);
             _business = new Mock<IUserBusiness>();
             _controller = new UsersController(_business.Object);
         }
@@ -45,11 +40,11 @@ namespace Tests.Unit.Controllers
             var name = user.UserName;
             var users = UserBuilder.BuildUsers(3);
             var usersViewModels = UserViewModel.MapUsersToViewModel(users);
-            _business.Setup(b => b.FindByNameAsync(name)).ReturnsAsync(usersViewModels);
+            _business.Setup(b => b.SearchAsync(name)).ReturnsAsync(usersViewModels);
 
             var result = await _controller.Search(name);
 
-            _business.Verify(r => r.FindByNameAsync(It.IsAny<string>()), Times.Once);
+            _business.Verify(r => r.SearchAsync(It.IsAny<string>()), Times.Once);
 
             result.ShouldBeAssignableTo<OkObjectResult>();
             if (result is OkObjectResult objResult)
@@ -62,7 +57,23 @@ namespace Tests.Unit.Controllers
                 }
             }
         }
-        
+
+        [Fact]
+        public async void Edit_WhenUserIsNotInRepository_ReturnsNotFound()
+        {
+            var user = new UserBuilder().Build();
+            var userViewModel = new UserViewModel(user);
+
+            _business.Setup(b => b.GetUserIdFromClaims(It.IsAny<ClaimsPrincipal>()))
+                .Returns(userViewModel.Id);
+            _business.Setup(b => b.EditAsync(It.IsAny<UserViewModel>()))
+                .ReturnsAsync(() => null);
+
+            var result = await _controller.Edit(userViewModel);
+
+            result.ShouldBeAssignableTo<NotFoundObjectResult>();
+        }
+
         [Fact]
         public async void Edit_WhenSucess_ReturnsNoContent()
         {
@@ -71,6 +82,8 @@ namespace Tests.Unit.Controllers
 
             _business.Setup(b => b.GetUserIdFromClaims(It.IsAny<ClaimsPrincipal>()))
                 .Returns(userViewModel.Id);
+            _business.Setup(b => b.EditAsync(It.IsAny<UserViewModel>()))
+                .ReturnsAsync(userViewModel);
 
             var result = await _controller.Edit(userViewModel);
 
@@ -78,7 +91,23 @@ namespace Tests.Unit.Controllers
         }
 
         [Fact]
-        public async void Edit_WhenUnauthorized_ReturnsUnauthorized()
+        public async void Edit_WhenSucess_EditAsyncIsCalledOnce()
+        {
+            var user = new UserBuilder().Build();
+            var userViewModel = new UserViewModel(user);
+
+            _business.Setup(b => b.GetUserIdFromClaims(It.IsAny<ClaimsPrincipal>()))
+                .Returns(userViewModel.Id);
+            _business.Setup(b => b.EditAsync(It.IsAny<UserViewModel>()))
+                .ReturnsAsync(userViewModel);
+
+            var result = await _controller.Edit(userViewModel);
+
+            _business.Verify(b => b.EditAsync(userViewModel), Times.Once());
+        }
+
+        [Fact]
+        public async void Edit_WhenClaimIdAndUserIdAreDifferent_ReturnsUnauthorized()
         {
             var user = new UserBuilder().Build();
             var userViewModel = new UserViewModel(user);
@@ -93,26 +122,89 @@ namespace Tests.Unit.Controllers
         {
             var user = new UserBuilder().Build();
             var userViewModel = new UserViewModel(user);
-            _business.Setup(b => b.IsInRole("admin", It.IsAny<ClaimsPrincipal>())).Returns(true);
+            _business.Setup(b => b.IsInRole("admin", It.IsAny<ClaimsPrincipal>()))
+                .Returns(true);
+            _business.Setup(b => b.EditAsync(It.IsAny<UserViewModel>()))
+                .ReturnsAsync(userViewModel);
 
             var result = await _controller.Edit(userViewModel);
 
             result.ShouldBeAssignableTo<NoContentResult>();
         }
-        //Edit if client is not admin and trying to edit someone else
-        //  than himself returns Unauthorized
-        //Edit if Invalid Returns BadRequest
 
-        //Role if success return NoContent
+        [Fact]
+        public async void Remove_WhenUserIsNotInRepository_ReturnsNotFound()
+        {
+            var user = new UserBuilder().Build();
+            var userViewModel = new UserViewModel(user);
 
-        //Remove if Success returns NoContent
-        //Remvoe if client is not admin and trying to remove someone other
-        //  than himself returns Unauthorized
+            _business.Setup(b => b.GetUserIdFromClaims(It.IsAny<ClaimsPrincipal>()))
+                .Returns(userViewModel.Id);
+            _business.Setup(b => b.RemoveAsync(It.IsAny<string>()))
+                .ReturnsAsync(() => null);
 
-        //Auxiliary
+            var result = await _controller.Remove(userViewModel.Id);
 
+            result.ShouldBeAssignableTo<NotFoundObjectResult>();
+        }
 
+        [Fact]
+        public async void Remove_WhenSuccess_ReturnsNoContent()
+        {
+            var user = new UserBuilder().Build();
+            var userViewModel = new UserViewModel(user);
 
+            _business.Setup(b => b.GetUserIdFromClaims(It.IsAny<ClaimsPrincipal>()))
+                .Returns(userViewModel.Id);
+            _business.Setup(b => b.RemoveAsync(It.IsAny<string>()))
+                .ReturnsAsync(userViewModel);
 
+            var result = await _controller.Remove(userViewModel.Id);
+
+            result.ShouldBeAssignableTo<NoContentResult>();
+        }
+
+        [Fact]
+        public async void Remove_WhenSucess_RemoveAsyncIsCalledOnce()
+        {
+            var user = new UserBuilder().Build();
+            var userViewModel = new UserViewModel(user);
+
+            _business.Setup(b => b.GetUserIdFromClaims(It.IsAny<ClaimsPrincipal>()))
+                .Returns(userViewModel.Id);
+            _business.Setup(b => b.RemoveAsync(It.IsAny<string>()))
+                .ReturnsAsync(userViewModel);
+
+            var result = await _controller.Remove(userViewModel.Id);
+
+            _business.Verify(b => b.RemoveAsync(userViewModel.Id), Times.Once());
+        }
+
+        [Fact]
+        public async void Remove_WhenClaimIdAndUserIdAreDifferent_ReturnsUnauthorized()
+        {
+            var user = new UserBuilder().Build();
+            _business.Setup(b => b.GetUserIdFromClaims(It.IsAny<ClaimsPrincipal>()))
+                .Returns(Guid.NewGuid().ToString());
+
+            var result = await _controller.Remove(user.Id);
+
+            result.ShouldBeAssignableTo<UnauthorizedResult>();
+        }
+
+        [Fact]
+        public async void Remove_WhenClientIsAdmin_Authorize()
+        {
+            var user = new UserBuilder().Build();
+            var userViewModel = new UserViewModel(user);
+
+            _business.Setup(b => b.IsInRole("admin", It.IsAny<ClaimsPrincipal>())).Returns(true);
+            _business.Setup(b => b.RemoveAsync(It.IsAny<string>()))
+                .ReturnsAsync(userViewModel);
+
+            var result = await _controller.Remove(Guid.NewGuid().ToString());
+
+            result.ShouldBeAssignableTo<NoContentResult>();
+        }
     }
 }
