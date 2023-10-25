@@ -9,7 +9,8 @@ using Api.Data.Contexts;
 using Api.Services;
 using Microsoft.OpenApi.Models;
 using Api.Models;
-using Microsoft.Extensions.DependencyInjection;
+using Api.Business.Implementation;
+using Api.Business.Contracts;
 
 namespace Api
 {
@@ -25,6 +26,7 @@ namespace Api
                 options.UseSqlite($"Data Source={Directory.GetCurrentDirectory()}\\Storage\\Db\\Transferer.db;"));
 
             services.AddScoped<IArchiveRepository, ArchiveRepository>();
+            services.AddScoped<IUserBusiness, UserBusiness>();
             services.AddScoped<IFileStorage>(provider =>
                 new LocalFileStorage($"{Directory.GetCurrentDirectory()}\\Storage\\Files"));
         }
