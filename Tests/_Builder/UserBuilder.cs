@@ -45,7 +45,13 @@ namespace Tests._Builder
             return user;
         }
 
-        public static List<User> BuildUsers(int num)
+        public static User BuildUser()
+        {
+
+            return new UserBuilder().Build(); 
+        }
+
+        public static List<User> BuildUser(int num)
         {
             List<User> users = new();
             for (int i = 0; i < num; i++)
