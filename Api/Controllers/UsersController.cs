@@ -1,7 +1,8 @@
-﻿using Api.Business.Contracts;
+﻿using Api.Business;
 using Api.Business.Implementation;
 using Api.Data.Interfaces;
 using Api.Models;
+using Api.Models.InputModel;
 using Api.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -22,6 +23,22 @@ namespace Api.Controllers
         }
 
         [Authorize(AuthenticationSchemes = "Bearer", Roles = "admin")]
+        [HttpPut("get")]
+        public async Task<IActionResult> Get(string id)
+        {
+            if (string.IsNullOrEmpty(id))
+            {
+                return BadRequest(id);
+            }
+            var user = await _business.GetAsync(id);
+            if (user == null)
+            {
+                return NotFound($"user not found. User Id: {id}");
+            }
+            return Ok(user);
+        }
+
+        [Authorize(AuthenticationSchemes = "Bearer", Roles = "admin")]
         [HttpPut("search")]
         public async Task<IActionResult> Search(string name)
         {
@@ -30,14 +47,18 @@ namespace Api.Controllers
                 return BadRequest(name);
             }
             var user = await _business.SearchAsync(name);
+            if (user == null)
+            {
+                return NotFound($"User not found: {name}");
+            }
             return Ok(user);
         }
 
         [Authorize(AuthenticationSchemes = "Bearer")]
         [HttpPut("edit")]
-        public async Task<IActionResult> Edit(UserViewModel user)
+        public async Task<IActionResult> Edit(UserInputModel user)
         {
-            var claimId = _business.GetUserIdFromClaims(User);  
+            var claimId = _business.GetUserIdFromClaims(User);
             if (claimId != user.Id && !_business.IsInRole("admin", User))
             {
                 return Unauthorized();

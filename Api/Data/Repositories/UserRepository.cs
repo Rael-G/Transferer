@@ -16,29 +16,25 @@ namespace Api.Data.Repositories
             _roleManager = roleManager;
         }
 
-        public Task<List<User>> GetAllAsync()
+        public async Task<User?> GetByIdAsync(string id)
         {
-            throw new NotImplementedException();
+           return await _userManager.FindByIdAsync(id);
         }
 
-        public Task<User?> GetByIdAsync(string id)
+        public async Task<User?> GetByNameAsync(string name)
         {
-            throw new NotImplementedException();
+            return await _userManager.FindByNameAsync(name);
         }
 
-        public Task<List<User>> GetByNameAsync(string name)
+        public async Task UpdateAsync(User user)
         {
-            throw new NotImplementedException();
+            await _userManager.UpdateAsync(user);
         }
 
-        public Task UpdateAsync(User user)
+        public async Task DeleteAsync(string id)
         {
-            throw new NotImplementedException();
-        }
-
-        public Task DeleteAsync(string id)
-        {
-            throw new NotImplementedException();
+            var user = await GetByIdAsync(id);
+            await _userManager.DeleteAsync(user);
         }
     }
 }

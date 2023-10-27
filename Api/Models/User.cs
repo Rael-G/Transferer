@@ -6,7 +6,7 @@ namespace Api.Models
     public class User : IdentityUser
     {
         [JsonIgnore]
-        public List<Archive>? Archives { get; set; }
+        public List<Archive> Archives { get; set; }
 
         public User() : base()
         {

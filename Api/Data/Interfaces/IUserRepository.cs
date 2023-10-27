@@ -5,9 +5,8 @@ namespace Api.Data.Interfaces
 {
     public interface IUserRepository
     {
-        Task<List<User>> GetAllAsync();
         Task<User?> GetByIdAsync(string id);
-        Task<List<User>> GetByNameAsync(string name);
+        Task<User?> GetByNameAsync(string name);
         Task UpdateAsync(User user);
         Task DeleteAsync(string id);
     }

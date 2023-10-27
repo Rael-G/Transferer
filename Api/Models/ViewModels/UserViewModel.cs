@@ -1,4 +1,6 @@
-﻿namespace Api.Models.ViewModels
+﻿using System.Text.Json.Serialization;
+
+namespace Api.Models.ViewModels
 {
     public record class UserViewModel
     {
@@ -6,28 +8,25 @@
 
         public string UserName { get; set; }
 
-        public UserViewModel (User user)
+        public static UserViewModel MapToViewModel(User user)
         {
-            Id = user.Id;
-            UserName = user.Id.ToString();
+            var viewModel = new UserViewModel()
+            {
+                Id = user.Id,
+                UserName = user.UserName
+            };
+            return viewModel;
         }
 
-        public static List<UserViewModel> MapUsersToViewModel(IEnumerable<User> users)
+        public static List<UserViewModel> MapToViewModel(IEnumerable<User> users)
         {
             List<UserViewModel> viewModels = new();
             foreach (var user in users)
             {
-                viewModels.Add(new UserViewModel(user));
+                viewModels.Add(MapToViewModel(user));
             }
 
             return viewModels;
-        }
-
-        public static User MapToUser(User user, UserViewModel userViewModel)
-        {
-            user.UserName = userViewModel.UserName;
-
-            return user;
         }
     }
 }
