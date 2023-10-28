@@ -1,17 +1,17 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Api.Models.ViewModels
+namespace Api.Models.InputModel
 {
-    public record SignInUser
+    public record LogInUser
     {
-        [Required]
+        [Required(AllowEmptyStrings = false)]
         public string UserName { get; set; }
 
         [Required]
         [DataType(DataType.Password)]
         public string Password { get; set; }
 
-        public SignInUser(string userName, string password)
+        public LogInUser(string userName, string password)
         {
             UserName = userName;
             Password = password;
