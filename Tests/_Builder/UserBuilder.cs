@@ -1,11 +1,6 @@
 ﻿using Api.Models;
-using Api.Models.ViewModels;
 using Bogus;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
 
 namespace Tests._Builder
 {
@@ -14,6 +9,7 @@ namespace Tests._Builder
     {
         private string _id;
         private string _userName;
+        private string _password;
 
         private readonly Faker _faker = new();
 
@@ -21,6 +17,7 @@ namespace Tests._Builder
         {
             _id = new Guid().ToString();
             _userName = _faker.Name.FirstName();
+            _password = _faker.Random.AlphaNumeric(10) + "!";
         }
 
         public UserBuilder SetId(string id)
@@ -35,6 +32,12 @@ namespace Tests._Builder
             return this;
         }
 
+        public UserBuilder SetPassword(string password)
+        {
+            _password = password;
+            return this;
+        }
+
         public User Build()
         {
             User user = new User()
@@ -42,6 +45,11 @@ namespace Tests._Builder
                 Id = _id,
                 UserName = _userName
             };
+
+            var passwordHasher = new PasswordHasher<User>();
+            var hashedPassword = passwordHasher.HashPassword(user, _password);
+            user.PasswordHash = hashedPassword;
+
             return user;
         }
 
