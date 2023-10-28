@@ -1,5 +1,7 @@
 ﻿using Api.Data.Interfaces;
 using Api.Models;
+using Api.Models.InputModel;
+using Api.Models.ViewModels;
 using Microsoft.AspNetCore.Identity;
 
 namespace Api.Data.Repositories
@@ -35,6 +37,24 @@ namespace Api.Data.Repositories
         {
             var user = await GetByIdAsync(id);
             await _userManager.DeleteAsync(user);
+        }
+
+        public async Task<string?> CreateAsync(LogInUser signInUser)
+        {
+            var user = new User() { UserName = signInUser.UserName};
+
+            var result = await _userManager.CreateAsync(user, signInUser.Password);
+
+            if (result.Succeeded)
+            {
+                return null;
+            }
+            return result.ToString();
+        }
+
+        public List<string> GetRoles(User user)
+        {
+            return _userManager.GetRolesAsync(user).Result.ToList();
         }
     }
 }

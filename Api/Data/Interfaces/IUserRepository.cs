@@ -1,5 +1,5 @@
 ﻿using Api.Models;
-using System.Security.Claims;
+using Api.Models.InputModel;
 
 namespace Api.Data.Interfaces
 {
@@ -9,5 +9,7 @@ namespace Api.Data.Interfaces
         Task<User?> GetByNameAsync(string name);
         Task UpdateAsync(User user);
         Task DeleteAsync(string id);
+        Task<string?> CreateAsync(LogInUser signInUser);
+        List<string> GetRoles(User user);
     }
 }
