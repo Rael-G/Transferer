@@ -9,7 +9,7 @@ namespace Api.Services
 {
     public class TokenService
     {
-        public static string GenerateToken(User user, UserManager<User> userManager)
+        public static string GenerateToken(User user, List<string> userRoles)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(Settings._secret);
@@ -22,17 +22,15 @@ namespace Api.Services
 
                 Expires = DateTime.UtcNow.AddDays(1),
 
-                Subject = GenerateClaims(user, userManager)
+                Subject = GenerateClaims(user, userRoles)
             };
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
         }
 
-        private static ClaimsIdentity GenerateClaims(User user, UserManager<User> userManager) 
+        private static ClaimsIdentity GenerateClaims(User user, List<string> userRoles) 
         {
-            var userRoles = userManager.GetRolesAsync(user).Result;
-
             var claims = new ClaimsIdentity(new[]
                 {
                     new Claim("UserId", user.Id),

@@ -10,7 +10,7 @@ using Api.Services;
 using Microsoft.OpenApi.Models;
 using Api.Models;
 using Api.Business.Implementation;
-using Api.Business.Contracts;
+using Api.Business;
 
 namespace Api
 {
@@ -28,6 +28,8 @@ namespace Api
             services.AddScoped<IArchiveRepository, ArchiveRepository>();
             services.AddScoped<IUserBusiness, UserBusiness>();
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IAuthBusiness, AuthBusiness>();
+
             services.AddScoped<IFileStorage>(provider =>
                 new LocalFileStorage($"{Directory.GetCurrentDirectory()}\\Storage\\Files"));
         }
