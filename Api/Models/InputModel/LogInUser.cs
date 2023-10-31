@@ -7,7 +7,7 @@ namespace Api.Models.InputModel
         [Required(AllowEmptyStrings = false)]
         public string UserName { get; set; }
 
-        [Required]
+        [Required(AllowEmptyStrings = false)]
         [DataType(DataType.Password)]
         public string Password { get; set; }
 
