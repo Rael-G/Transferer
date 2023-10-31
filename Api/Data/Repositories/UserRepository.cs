@@ -1,7 +1,6 @@
 ﻿using Api.Data.Interfaces;
 using Api.Models;
 using Api.Models.InputModel;
-using Api.Models.ViewModels;
 using Microsoft.AspNetCore.Identity;
 
 namespace Api.Data.Repositories
@@ -28,9 +27,24 @@ namespace Api.Data.Repositories
             return await _userManager.FindByNameAsync(name);
         }
 
-        public async Task UpdateAsync(User user)
+        public async Task<string?> UpdateAsync(User user, UserInputModel inputModel)
         {
-            await _userManager.UpdateAsync(user);
+            var passwordResult = await _userManager
+                .ChangePasswordAsync(user, inputModel.OldPassword, inputModel.NewPassword);
+
+            if (!passwordResult.Succeeded)
+            {
+                return passwordResult.ToString();
+            }
+
+            var nameResult = await _userManager.SetUserNameAsync(user, inputModel.UserName);
+
+            if (!nameResult.Succeeded)
+            {
+                return nameResult.ToString();
+            }
+
+            return null;
         }
 
         public async Task DeleteAsync(string id)
@@ -52,9 +66,11 @@ namespace Api.Data.Repositories
             return result.ToString();
         }
 
-        public List<string> GetRoles(User user)
+        public async Task<List<string>> GetRolesAsync(User user)
         {
-            return _userManager.GetRolesAsync(user).Result.ToList();
+            var result = await _userManager.GetRolesAsync(user);
+
+            return result.ToList();
         }
     }
 }
