@@ -2,6 +2,7 @@
 using Api.Models;
 using Api.Models.InputModel;
 using Api.Models.ViewModels;
+using Api.Services;
 using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
 
@@ -16,44 +17,31 @@ namespace Api.Business.Implementation
             _repository = repository;
         }
 
-        public async Task<UserViewModel?> GetAsync(string id)
+        public async Task<User?> GetAsync(string id)
         {
             var user = await _repository.GetByIdAsync(id);
             if (user == null)
             {
                 return null;
             }
-            var userViewModel = UserViewModel.MapToViewModel(user);
 
-            return userViewModel;
+            return user;
         }
 
-        public async Task<UserViewModel?> SearchAsync(string name)
+        public async Task<User?> SearchAsync(string name)
         {
             var user = await _repository.GetByNameAsync(name);
-            if (user == null)
-            {
-                return null; 
-            }
-            var userViewModel = UserViewModel.MapToViewModel(user);
-            return userViewModel;
+            return user;
         }
 
-        public async Task<UserViewModel?> EditAsync(UserInputModel userInputModel)
+        public async Task<string?> EditAsync(User user, UserInputModel userInputModel)
         {
-            var user = await _repository.GetByIdAsync(userInputModel.Id);
-            if (user == null)
-            {
-                return null;
-            }
-            UserInputModel.MapToModel(user, userInputModel);
-
-            await _repository.UpdateAsync(user);
-
-            return UserViewModel.MapToViewModel(user);
+            
+            var result = await _repository.UpdateAsync(user, userInputModel);
+            return result;
         }
 
-        public async Task<UserViewModel?> RemoveAsync(string id)
+        public async Task<User?> RemoveAsync(string id)
         {
             var user = await _repository.GetByIdAsync(id);
             if (user == null)
@@ -63,7 +51,7 @@ namespace Api.Business.Implementation
 
             await _repository.DeleteAsync(user.Id);
 
-            return UserViewModel.MapToViewModel(user);
+            return user;
         }
 
         public string? GetUserIdFromClaims(ClaimsPrincipal user)

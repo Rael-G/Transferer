@@ -6,6 +6,6 @@ namespace Api.Business
     public interface IAuthBusiness
     {
         Task<LoggedUser?> LoginAsync(LogInUser logInUser);
-        Task<string> CreateAsync(LogInUser logInUser);
+        Task<string?> CreateAsync(LogInUser logInUser);
     }
 }

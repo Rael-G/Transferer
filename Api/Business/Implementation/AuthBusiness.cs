@@ -16,7 +16,7 @@ namespace Api.Business.Implementation
             _repository = repository;
         }
 
-        public async Task<string> CreateAsync(LogInUser logInUser)
+        public async Task<string?> CreateAsync(LogInUser logInUser)
         {
             return await _repository.CreateAsync(logInUser);
         }
@@ -36,7 +36,7 @@ namespace Api.Business.Implementation
 
             if (result == PasswordVerificationResult.Success)
             {
-                var roles = _repository.GetRoles(user);
+                var roles = await _repository.GetRolesAsync(user);
                 token = TokenService.GenerateToken(user, roles);
             }
             LoggedUser loggedUser = new() { UserName = user.UserName, Token = token };
