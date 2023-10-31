@@ -1,13 +1,9 @@
 ﻿using Api.Business;
-using Api.Business.Implementation;
-using Api.Data.Interfaces;
-using Api.Models;
 using Api.Models.InputModel;
 using Api.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System.Xml.Linq;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Api.Controllers
 {
@@ -23,7 +19,7 @@ namespace Api.Controllers
         }
 
         [Authorize(AuthenticationSchemes = "Bearer", Roles = "admin")]
-        [HttpPut("get")]
+        [HttpGet("get")]
         public async Task<IActionResult> Get(string id)
         {
             if (string.IsNullOrEmpty(id))
@@ -35,11 +31,12 @@ namespace Api.Controllers
             {
                 return NotFound($"user not found. User Id: {id}");
             }
-            return Ok(user);
+            var userVM = UserViewModel.MapToViewModel(user);
+            return Ok(userVM);
         }
 
         [Authorize(AuthenticationSchemes = "Bearer", Roles = "admin")]
-        [HttpPut("search")]
+        [HttpGet("search")]
         public async Task<IActionResult> Search(string name)
         {
             if (string.IsNullOrEmpty(name))
@@ -51,23 +48,32 @@ namespace Api.Controllers
             {
                 return NotFound($"User not found: {name}");
             }
-            return Ok(user);
+            var userVM = UserViewModel.MapToViewModel(user);
+            return Ok(userVM);
         }
 
         [Authorize(AuthenticationSchemes = "Bearer")]
         [HttpPut("edit")]
-        public async Task<IActionResult> Edit(UserInputModel user)
+        public async Task<IActionResult> Edit(UserInputModel userInput)
         {
-            var claimId = _business.GetUserIdFromClaims(User);
-            if (claimId != user.Id && !_business.IsInRole("admin", User))
+            if (!ModelState.IsValid)
             {
-                return Unauthorized();
+                return BadRequest(ModelState);
             }
 
-            var updatedUser = await _business.EditAsync(user);
-            if (updatedUser == null)
+            var claimId = _business.GetUserIdFromClaims(User);
+
+            var user = await _business.GetAsync(claimId);
+
+            if (user == null)
             {
-                return NotFound($"User not found. User Id: {user.Id}");
+                return NotFound($"User not found. User Id: {claimId}");
+            }
+
+            var result = await _business.EditAsync(user, userInput);
+            if (!result.IsNullOrEmpty()) 
+            { 
+                return BadRequest(result);
             }
 
             return NoContent();
@@ -87,6 +93,9 @@ namespace Api.Controllers
             {
                 return NotFound($"User not found. User Id: {id}");
             }
+
+            //TODO:
+            //Remover todos os arquivos do usuario
             return NoContent();
         }
     }
