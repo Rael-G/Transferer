@@ -62,11 +62,7 @@ namespace Api
                 .AddDefaultTokenProviders();
             services.AddAuthorization();
 
-            using var serviceProvider = services.BuildServiceProvider();
-            var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-            var userManager = serviceProvider.GetRequiredService<UserManager<User>>();
-
-            Seeder.Seed(roleManager, userManager);
+            SeedData(services);
         }
 
         public static void ConfigureSwagger(this IServiceCollection services)
@@ -96,6 +92,15 @@ namespace Api
                     }
                 });
             });
+        }
+
+        private static void SeedData(IServiceCollection services)
+        {
+            using var serviceProvider = services.BuildServiceProvider();
+            var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            var userManager = serviceProvider.GetRequiredService<UserManager<User>>();
+
+            Seeder.Seed(roleManager, userManager);
         }
     }
 }
