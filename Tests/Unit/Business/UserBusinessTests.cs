@@ -1,5 +1,6 @@
 ﻿using Api.Business.Implementation;
 using Api.Data.Interfaces;
+using Api.Models;
 using Api.Models.InputModel;
 using Api.Models.ViewModels;
 using Moq;
@@ -13,10 +14,18 @@ namespace Tests.Unit.Business
         private Mock<IUserRepository> _repository;
         private UserBusiness _business;
 
+        private User user;
+        private UserViewModel userViewModel;
+        UserInputModel userInputModel;
+
         public UserBusinessTests() 
         {
             _repository = new Mock<IUserRepository>();
             _business = new UserBusiness(_repository.Object);
+
+            user = new UserBuilder().Build();
+            userViewModel = UserViewModel.MapToViewModel(user);
+            userInputModel = new UserInputModel(user.UserName, "Batatinha1!", "Batatinha1!");
         }
 
         [Fact]
@@ -33,18 +42,14 @@ namespace Tests.Unit.Business
         }
 
         [Fact]
-        public async void GetAsync_WhenSuccess_ReturnsUsersViewModel()
+        public async void GetAsync_WhenSuccess_ReturnsUser()
         {
-            var id = Guid.NewGuid().ToString();
-            var user = UserBuilder.BuildUser();
-            var userViewModel = UserViewModel.MapToViewModel(user);
-
-            _repository.Setup(r => r.GetByIdAsync(id))
+            _repository.Setup(r => r.GetByIdAsync(user.Id))
                 .ReturnsAsync(user);
 
-            var result = await _business.GetAsync(id);
+            var result = await _business.GetAsync(user.Id);
 
-            result.ShouldBe(userViewModel);
+            result.ShouldBe(user);
         }
 
         [Fact]
@@ -61,58 +66,33 @@ namespace Tests.Unit.Business
         }
 
         [Fact]
-        public async void SearchAsync_WhenSuccess_ReturnsUsersViewModel()
+        public async void SearchAsync_WhenSuccess_ReturnsUser()
         {
             var name = "Joaosinho77";
-            var user = UserBuilder.BuildUser();
-            var userViewModel = UserViewModel.MapToViewModel(user);
 
             _repository.Setup(r => r.GetByNameAsync(name))
                 .ReturnsAsync(user);
 
             var result = await _business.SearchAsync(name);
 
-            result.ShouldBe(userViewModel);
-        }
-
-        [Fact]
-        public async void EditAsync_IfUserIsNotInRepository_ReturnsNull()
-        {
-            var user = new UserBuilder().Build();
-            var userInputModel = new UserInputModel(user.Id, user.UserName);
-
-            _repository.Setup(r => r.GetByIdAsync(userInputModel.Id))
-                .ReturnsAsync(() => null);
-
-            var result = await _business.EditAsync(userInputModel);
-
-            result.ShouldBeNull();
+            result.ShouldBe(user);
         }
 
         [Fact]
         public async void EditAsync_WhenSuccess_UpdateAsyncIsCalledOnce()
         {
-            var user = new UserBuilder().Build();
-            var userInputModel = new UserInputModel(user.Id, user.UserName);
+            var result = await _business.EditAsync(user, userInputModel);
 
-            _repository.Setup(r => r.GetByIdAsync(userInputModel.Id))
-                .ReturnsAsync(user);
-
-            var result = await _business.EditAsync(userInputModel);
-
-            _repository.Verify(r => r.UpdateAsync(user), Times.Once);
+            _repository.Verify(r => r.UpdateAsync(user, userInputModel), Times.Once);
         }
 
         [Fact]
         public async void RemoveAsync_IfUserIsNotInRepository_ReturnsNull()
         {
-            var user = new UserBuilder().Build();
-            var userInputModel = new UserInputModel(user.Id, user.UserName);
-
-            _repository.Setup(r => r.GetByIdAsync(userInputModel.Id))
+            _repository.Setup(r => r.GetByIdAsync(user.Id))
                 .ReturnsAsync(() => null);
 
-            var result = await _business.RemoveAsync(userInputModel.Id);
+            var result = await _business.RemoveAsync(user.Id);
 
             result.ShouldBeNull();
         }
@@ -120,9 +100,6 @@ namespace Tests.Unit.Business
         [Fact]
         public async void RemoveAsync_WhenSuccess_DeleteAsyncIsCalledOnce()
         {
-            var user = new UserBuilder().Build();
-            var userViewModel = UserViewModel.MapToViewModel(user);
-
             _repository.Setup(r => r.GetByIdAsync(userViewModel.Id))
                 .ReturnsAsync(user);
 

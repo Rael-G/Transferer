@@ -77,8 +77,8 @@ namespace Tests.Unit.Business
 
             _repository.Setup(r => r.GetByNameAsync(It.IsAny<string>()))
                 .ReturnsAsync(user);
-            _repository.Setup(r => r.GetRoles(user))
-                .Returns(new List<string>());
+            _repository.Setup(r => r.GetRolesAsync(user))
+                .ReturnsAsync(new List<string>());
 
             var result = await _business.LoginAsync(_logInUser);
 
