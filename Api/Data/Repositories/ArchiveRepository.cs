@@ -17,24 +17,30 @@ namespace Api.Data.Repositories
 
         public async Task<List<Archive>> GetAllAsync()
         {
-            return await _context.Archives.ToListAsync();
+            return await _context.Archives
+                .Include(a => a.User)
+                .ToListAsync();
         }
 
         public async Task<List<Archive>> GetAllAsync(string Id)
         {
-            return await _context.Archives.Where(a => a.UserId == Id).ToListAsync();
+            return await _context.Archives
+                .Where(a => a.UserId == Id)
+                .Include(a => a.User)
+                .ToListAsync();
         }
 
         public async Task<Archive?> GetByIdAsync(Guid id, string userId)
         {
             var archive = await _context.Archives
                 .Where(a => a.Id == id && a.UserId == userId)
+                .Include(a => a.User)
                 .FirstOrDefaultAsync();
 
             return archive;
         }
 
-        public async Task<List<Archive>>  GetByIdsAsync(Guid[] ids, string userId)
+        public async Task<List<Archive>>GetByIdsAsync(Guid[] ids, string userId)
         {
             List<Archive> archives = new();
 
@@ -42,6 +48,7 @@ namespace Api.Data.Repositories
             {
                 var archive = await _context.Archives
                     .Where(a => a.Id == id && a.UserId == userId)
+                    .Include(a => a.User)
                     .FirstOrDefaultAsync();
 
                 if (archive != null)
@@ -57,6 +64,7 @@ namespace Api.Data.Repositories
              var archives = await _context.Archives
                 .Where(a => Regex.IsMatch(a.FileName.ToLower(), name.ToLower())
                     && a.UserId == userId)
+                .Include(a => a.User)
                 .ToListAsync();
 
             return archives;
@@ -70,10 +78,8 @@ namespace Api.Data.Repositories
             return archive;
         }
 
-        public async Task DeleteAsync(Guid id, string userId)
+        public async Task DeleteAsync(Archive archive)
         {
-            var archive = await GetByIdAsync(id, userId);
-
             _context.Archives.Remove(archive);
             await _context.SaveChangesAsync();
         }

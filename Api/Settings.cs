@@ -29,6 +29,7 @@ namespace Api
             services.AddScoped<IUserBusiness, UserBusiness>();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IAuthBusiness, AuthBusiness>();
+            services.AddScoped<IArchiveBusiness, ArchiveBusiness>();
 
             services.AddScoped<IFileStorage>(provider =>
                 new LocalFileStorage($"{Directory.GetCurrentDirectory()}\\Storage\\Files"));

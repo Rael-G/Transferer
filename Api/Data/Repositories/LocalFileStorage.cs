@@ -16,34 +16,34 @@ namespace Api.Data.Repositories
             }
         }
 
-        public Stream? GetByPath(string fullPath)
+        public async Task<Stream?> GetByPathAsync(string fullPath)
         {
             if (File.Exists(fullPath))
             {
-                byte[] file = File.ReadAllBytes(fullPath);
+                byte[] file = await File.ReadAllBytesAsync(fullPath);
                 return new MemoryStream(file);
             }
             return null;
         }
 
-        public string Store(Stream file)
+        public async Task<string> StoreAsync(Stream file)
         {
             Guid fileName = Guid.NewGuid();
             string fullPath = Path.Combine(_path, fileName.ToString());
             using (FileStream fileStream = new FileStream(fullPath, FileMode.Create))
             {
-                file.CopyTo(fileStream);
+                await file.CopyToAsync(fileStream);
             }
 
             return fullPath;
         }
 
-        public bool Delete(string path)
+        public async Task<bool> DeleteAsync(string path)
         {
             bool result;
             try
             {
-                File.Delete(path);
+                await Task.Run(() => File.Delete(path));
             }
             finally 
             { 

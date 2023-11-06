@@ -9,7 +9,7 @@ namespace Api.Models
     public class Archive
     {
         [Key]
-        public Guid? Id { get; private set; }
+        public Guid Id { get; private set; }
 
         [Required]
         public string? FileName { get; private set; }

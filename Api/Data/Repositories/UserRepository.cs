@@ -27,6 +27,11 @@ namespace Api.Data.Repositories
             return await _userManager.FindByNameAsync(name);
         }
 
+        public async Task UpdateAsync(User user)
+        {
+            await _userManager.UpdateAsync(user);
+        }
+
         public async Task<string?> UpdateAsync(User user, UserInputModel inputModel)
         {
             var passwordResult = await _userManager
