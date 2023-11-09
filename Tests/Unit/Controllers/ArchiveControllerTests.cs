@@ -1,15 +1,11 @@
 ﻿using Api.Business;
 using Api.Controllers;
-using Api.Data.Interfaces;
 using Api.Models;
 using Api.Models.ViewModels;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Shouldly;
-using System.IO.Compression;
-using System.Security.Claims;
 using Tests._Builder;
 
 namespace Tests.Unit.Controllers
@@ -30,22 +26,17 @@ namespace Tests.Unit.Controllers
         {
             var archives = ArchiveBuilder.BuildArchives(10);
 
-            _business.Setup(r => r.GetAllAsync()).ReturnsAsync(archives);
+            _business.Setup(b => b.GetAllAsync()).ReturnsAsync(archives);
 
             var result = await _controller.ListAll();
 
-            _business.Verify(r => r.GetAllAsync(), Times.Once);
+            _business.Verify(b => b.GetAllAsync(), Times.Once);
 
-            result.ShouldBeAssignableTo<OkObjectResult>();
-            if (result is OkObjectResult objResult)
-            {
-                objResult.Value.ShouldNotBeNull();
-                objResult.Value.ShouldBeOfType(typeof(List<ArchiveViewModel>));
-                if (objResult.Value is List<Archive>)
-                {
-                    objResult.Value.ShouldBe(archives);
-                }
-            }
+            var objResult = result as OkObjectResult;
+            var resultValue = objResult.Value as List<ArchiveViewModel>;
+
+            resultValue.FirstOrDefault().FileName.ShouldBe(archives.FirstOrDefault().FileName);
+            resultValue.Count.ShouldBe(archives.Count);
         }
 
         //TODO:
@@ -59,7 +50,7 @@ namespace Tests.Unit.Controllers
         {
             IActionResult result = await _controller.Search(names);
 
-            _business.Verify(r => r.GetByNameAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            _business.Verify(b => b.GetByNameAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
 
             result.ShouldBeAssignableTo<BadRequestObjectResult>();
         }
@@ -69,43 +60,30 @@ namespace Tests.Unit.Controllers
         {
             List<Archive> archives = ArchiveBuilder.BuildArchives(10);
             var names = "picture";
-            string userId = Guid.NewGuid().ToString();
 
-            SetupClaim();
-
-            _business.Setup(r => r.GetByNameAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(archives);
+            _business.Setup(b => b  .GetByNameAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(archives);
 
             IActionResult result = await _controller.Search(names);
 
-            _business.Verify(r => r.GetByNameAsync(names, It.IsAny<string>()), Times.Once);
+            _business.Verify(b => b.GetByNameAsync(names, It.IsAny<string>()), Times.Once);
 
-            result.ShouldBeAssignableTo<OkObjectResult>();
-            if (result is OkObjectResult objResult)
-            {
-                objResult.Value.ShouldNotBeNull();
-                objResult.Value.ShouldBeOfType(typeof(List<ArchiveViewModel>));
-                if (objResult.Value is List<Archive>)
-                {
-                    objResult.Value.ShouldBe(archives);
-                }
-            }
+            var objResult = result as OkObjectResult;
+            var resultValue = objResult.Value as List<ArchiveViewModel>;
+
+            resultValue.FirstOrDefault().FileName.ShouldBe(archives.FirstOrDefault().FileName);
+            resultValue.Count.ShouldBe(archives.Count);
         }
 
         [Fact]
         public async void Download_WhenArchiveIsNotInRepository_ReturnsNotFound()
         {
             Guid id = Guid.NewGuid();
-            Archive? notFoundArchive = null;
-            string userId = Guid.NewGuid().ToString();
 
-            SetupClaim();
-            _business.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<string>())).ReturnsAsync(notFoundArchive);
+            _business.Setup(b => b.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<string>())).ReturnsAsync(() => null);
 
             var result = await _controller.Download(id);
 
-            _business.Verify(r => r.GetByIdAsync(id, It.IsAny<string>()), Times.Once);
-            _mockStorage.Verify(s => s.GetByPath(It.IsAny<string>()), Times.Never);
-
+            _business.Verify(b => b.GetByIdAsync(id, It.IsAny<string>()), Times.Once);
             result.ShouldBeAssignableTo<NotFoundResult>();
         }
 
@@ -114,20 +92,14 @@ namespace Tests.Unit.Controllers
         {
             Guid id = Guid.NewGuid();
             Archive archive = new ArchiveBuilder().Build();
-            Stream? notFoundStream = null;
-            string userId = Guid.NewGuid().ToString();
 
-            SetupClaim();
-            _business.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<string>())).ReturnsAsync(archive);
-            _mockStorage.Setup(s => s.GetByPath(It.IsAny<string>())).Returns(notFoundStream);
+            _business.Setup(b => b.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<string>())).ReturnsAsync(archive);
 
             var result = await _controller.Download(id);
 
-            _business.Verify(r => r.GetByIdAsync(id, It.IsAny<string>()), Times.Once);
-            _mockStorage.Verify(s => s.GetByPath(archive.Path), Times.Once);
+            _business.Verify(b => b.GetByIdAsync(id, It.IsAny<string>()), Times.Once);
 
-            var statusCodeResult = Assert.IsType<ObjectResult>(result);
-            Assert.Equal(StatusCodes.Status500InternalServerError, statusCodeResult.StatusCode);
+            result.ShouldBeAssignableTo<NotFoundObjectResult>();
         }
 
         [Fact]
@@ -136,109 +108,81 @@ namespace Tests.Unit.Controllers
             Guid id = Guid.NewGuid();
             Archive archive = new ArchiveBuilder().Build();
             Stream stream = new MemoryStream();
-            string userId = Guid.NewGuid().ToString();
 
-            SetupClaim();
-            _business.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<string>())).ReturnsAsync(archive);
-            _mockStorage.Setup(s => s.GetByPath(It.IsAny<string>())).Returns(stream);
+            _business.Setup(b => b.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<string>()))
+                .ReturnsAsync(archive);
+            _business.Setup(b => b.DownloadAsync(archive))
+                .ReturnsAsync(stream);
 
             var result = await _controller.Download(id);
 
-            _business.Verify(r => r.GetByIdAsync(id, It.IsAny<string>()), Times.Once);
-            _mockStorage.Verify(s => s.GetByPath(archive.Path), Times.Once);
+            _business.Verify(b => b.GetByIdAsync(id, It.IsAny<string>()), Times.Once);
+            _business.Verify(b => b.DownloadAsync(archive), Times.Once);
 
-            result.ShouldBeAssignableTo<FileStreamResult>();
-            if (result is FileStreamResult fileStreamResult)
-            {
-                fileStreamResult.FileStream.ShouldBe(stream);
-                fileStreamResult.ContentType.ShouldBe(archive.ContentType);
-                fileStreamResult.FileDownloadName.ShouldBe(archive.FileName);
-            }
+            var fileStreamResult = result as FileStreamResult;
+            
+            fileStreamResult.FileStream.ShouldBe(stream);
         }
 
-        [Theory]
-        [InlineData(null)]
-        [InlineData("")]
-        [InlineData(" ")]
-        [InlineData("1,2,3,4,S")]
-
-        public async void DownloadZip_WhenIdsAreNotIntParseable_ReturnBadRequest(string id)
+        [Fact]
+        public async void DownloadZip_WhenArchivesAreNotInRepository_ReturnsNotFoundWithIds()
         {
+            Guid[] idArray = new Guid[] { Guid.NewGuid() };
+            List<Archive> archives = new();
+            var missing = "arquivo1; arquivo2;";
+
+            _business.Setup(b => b.GetByIdsAsync(It.IsAny<Guid[]>(), It.IsAny<string>()))
+                .ReturnsAsync((archives, missing));
+
+            var result = await _controller.DownloadZip(idArray);
+
+            var resultObj = result as NotFoundObjectResult;
+            var resultMsg = resultObj.Value as string;
+
+            resultMsg.ShouldContain(missing);
+        }
+
+        [Fact]
+        public async void DownloadZip_WhenStreamsAreNotInStorage_ReturnsNotFoundWithIds()
+        {
+            var id = new Guid[] { Guid.NewGuid() };
+            var bytes = Array.Empty<byte>();
+            var msg = "archive1; archive2";
+
+            List<Archive> archives = ArchiveBuilder.BuildArchives(1);
+
+            _business.Setup(b => b.GetByIdsAsync(It.IsAny<Guid[]>(), It.IsAny<string>()))
+                .ReturnsAsync((archives, ""));
+
+            _business.Setup(b => b.DownloadMultipleAsync(It.IsAny<List<Archive>>()))
+                .ReturnsAsync((bytes, msg));
+
             var result = await _controller.DownloadZip(id);
 
-            _business.Verify(r => r.GetByIdsAsync(It.IsAny<Guid[]>(), It.IsAny<string>()), Times.Never);
-            _mockStorage.Verify(s => s.GetByPath(It.IsAny<string>()), Times.Never);
+            var resultObj = result as NotFoundObjectResult;
+            var resultMsg = resultObj.Value as string;
 
-            result.ShouldBeAssignableTo<BadRequestObjectResult>();
-        }
-
-        [Fact]
-        public async void DownloadZip_WhenArchivesAreNotInRepository_ReturnsNotFound()
-        {
-            string idString = Guid.NewGuid().ToString();
-            Guid[] idArray = new Guid[] { Guid.Parse(idString) };
-            List<Archive> archives = new();
-            List<int> notFoundIds = new() { 1 };
-            string userId = Guid.NewGuid().ToString();
-
-            SetupClaim();
-            _business.Setup(r => r.GetByIdsAsync(It.IsAny<Guid[]>(), It.IsAny<string>())).ReturnsAsync((archives));
-
-            var result = await _controller.DownloadZip(idString);
-
-            _business.Verify(r => r.GetByIdsAsync(idArray, It.IsAny<string>()), Times.Once);
-            _mockStorage.Verify(s => s.GetByPath(It.IsAny<string>()), Times.Never);
-
-            result.ShouldBeAssignableTo<NotFoundResult>();
-        }
-
-        [Fact]
-        public async void DownloadZip_WhenStreamsAreNotInStorage_InternalServerError()
-        {
-
-            Stream? notFoundStream = null;
-            List<Archive> archives = new() { new ArchiveBuilder().Build() };
-            string userId = Guid.NewGuid().ToString();
-
-            SetupClaim();
-            _business.Setup(r => r.GetByIdsAsync(It.IsAny<Guid[]>(), It.IsAny<string>())).ReturnsAsync((archives));
-            _mockStorage.Setup(s => s.GetByPath(It.IsAny<string>())).Returns(notFoundStream);
-
-            var result = await _controller.DownloadZip(Guid.NewGuid().ToString());
-
-            _business.Verify(r => r.GetByIdsAsync(It.IsAny<Guid[]>(), It.IsAny<string>()), Times.Once);
-            _mockStorage.Verify(s => s.GetByPath(It.IsAny<string>()), Times.Once);
-
-            var statusCodeResult = Assert.IsType<ObjectResult>(result);
-            Assert.Equal(StatusCodes.Status500InternalServerError, statusCodeResult.StatusCode);
+            resultMsg.ShouldContain(msg);
 
         }
 
         [Fact]
         public async void DownloadZip_WhenArchivesAreInRepositoryAndStreamsAreInStorage_ReturnsFileStreamResult()
         {
-            string idString = Guid.NewGuid().ToString();
-            Guid[] idArray = new Guid[] { Guid.Parse(idString) };
-            List<Archive> archives = new() { new ArchiveBuilder().SetId(5).SetPath("path").Build() };
-            List<int> notFoundIds = new() { 6 };
-            byte[] downloadZip = await CreateZipDataClone(archives);
-            string userId = Guid.NewGuid().ToString();
+            Guid[] ids = new Guid[] { Guid.NewGuid() };
+            List<Archive> archives = ArchiveBuilder.BuildArchives(4);
+            byte[] downloadZip = new byte[] { 255, 0, 255, 0, 255};
 
-            SetupClaim();
-            _business.Setup(r => r.GetByIdsAsync(It.IsAny<Guid[]>(), It.IsAny<string>())).ReturnsAsync((archives));
-            _mockStorage.Setup(s => s.GetByPath(It.IsAny<string>())).Returns(new MemoryStream(new byte[255]));
+            _business.Setup(b => b.GetByIdsAsync(It.IsAny<Guid[]>(), It.IsAny<string>()))
+                .ReturnsAsync((archives, ""));
 
-            var result = await _controller.DownloadZip(idString);
+            _business.Setup(b => b.DownloadMultipleAsync(It.IsAny<List<Archive>>()))
+                .ReturnsAsync((downloadZip, ""));
 
-            _business.Verify(r => r.GetByIdsAsync(idArray, It.IsAny<string>()), Times.Once);
-            _mockStorage.Verify(s => s.GetByPath("path"), Times.Once);
+            var result = await _controller.DownloadZip(ids);
 
-            result.ShouldBeAssignableTo<FileContentResult>();
-            if (result is FileContentResult fileStreamResult)
-            {
-                fileStreamResult.FileContents.ShouldBe(downloadZip);
-                fileStreamResult.ContentType.ShouldBe("application/zip");
-            }
+            var fileStreamResult = result as FileContentResult;
+            fileStreamResult.FileContents.ShouldBe(downloadZip);
         }
 
         [Fact]
@@ -246,77 +190,43 @@ namespace Tests.Unit.Controllers
         {
             IEnumerable<IFormFile>? files = null;
 
-            _business.Setup(r => r.SaveAsync(It.IsAny<Archive>())).
-            ReturnsAsync((Archive archive) => archive);
-
             var result = await _controller.Upload(files);
 
-            _business.Verify(r => r.GetByIdsAsync(It.IsAny<Guid[]>(), It.IsAny<string>()), Times.Never);
-            _mockStorage.Verify(s => s.GetByPath(It.IsAny<string>()), Times.Never);
-
             result.ShouldBeAssignableTo<BadRequestResult>();
-
         }
 
         [Fact]
         public async void Upload_WhenFilesProvided_ReturnsOkWithArchives()
         {
-            IEnumerable<IFormFile> files = new List<IFormFile>()
+            var files = new List<IFormFile>()
             {
-                new FormFile(new MemoryStream(new byte[100]), 0, 100, "file1.txt", "file1.txt")
-                {
-                    Headers = new HeaderDictionary{{ "Content-Type", "text/plain" }}
-                },
-                new FormFile(new MemoryStream(new byte[150]), 0, 150, "file2.txt", "file2.txt")
-                {
-                    Headers = new HeaderDictionary{{ "Content-Type", "text/plain" }}
-                }
+                new FormFile(new MemoryStream(new byte[]{ }), 0, 0, "", "")
             };
-            var archives = new List<Archive>();
-            foreach (IFormFile file in files)
-            {
-                archives.Add(new(file.FileName, file.ContentType, file.Length, "path", new User()));
-            }
-            string userId = Guid.NewGuid().ToString();
-            var user = new User { Id  = userId, Archives = new() };
-            SetupClaim();
-            _mockUserManager.Setup(u => u.FindByIdAsync(It.IsAny<string>())).ReturnsAsync(user);
-            _business.Setup(r => r.SaveAsync(It.IsAny<Archive>())).
-                ReturnsAsync((Archive archive) => archive);
-            _mockStorage.Setup(s => s.Store(It.IsAny<Stream>())).Returns("path");
+            var archives = ArchiveBuilder.BuildArchives(6);
+
+            _business.Setup(b => b.UploadAsync(It.IsAny<IEnumerable<IFormFile>>(), It.IsAny<string>()))
+                .ReturnsAsync(archives);
 
             var result = await _controller.Upload(files);
 
-            _business.Verify(r => r.SaveAsync(It.IsAny<Archive>()), Times.Exactly(2));
-            _mockStorage.Verify(s => s.Store(It.IsAny<Stream>()), Times.Exactly(2));
-
             result.ShouldBeAssignableTo<OkObjectResult>();
-            if (result is OkObjectResult objResult)
-            {
-                objResult.Value.ShouldNotBeNull();
-                if (objResult.Value is IEnumerable<IFormFile>)
-                {
-                    objResult.Value.ShouldBe(archives);
-                }
-            }
+            var objResult = result as OkObjectResult;
+            var resultValue = objResult.Value as List<ArchiveViewModel>;
+
+            resultValue.FirstOrDefault().FileName.ShouldBe(archives.FirstOrDefault().FileName);
+            resultValue.Count.ShouldBe(archives.Count);
         }
 
         [Fact]
         public async void Delete_WhenArchiveIsNotInRepository_ReturnsNotFound()
         {
             Guid id = Guid.NewGuid();
-            Archive? archive = null;
-            string userId = Guid.NewGuid().ToString();
-            var user = new User { Id = userId, Archives = new() };
+            Archive? nullArchive = null;
 
-            _mockUserManager.Setup(u => u.FindByIdAsync(It.IsAny<string>())).ReturnsAsync(user);
-            SetupClaim();
-            _business.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<string>())).ReturnsAsync(archive);
+            _business.Setup(b => b.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<string>()))
+                .ReturnsAsync(nullArchive);
 
             var result = await _controller.Delete(id);
-
-            _business.Verify(r => r.GetByIdAsync(id, It.IsAny<string>()), Times.Once);
-            _mockStorage.Verify(s => s.Delete(It.IsAny<string>()), Times.Never);
 
             result.ShouldBeAssignableTo<NotFoundResult>();
         }
@@ -326,57 +236,13 @@ namespace Tests.Unit.Controllers
         {
             Guid id = Guid.NewGuid();
             Archive? archive = new ArchiveBuilder().Build();
-            string userId = id.ToString();
-            var user = new User { Id = userId, Archives = new() };
 
-            _mockUserManager.Setup(u => u.FindByIdAsync(It.IsAny<string>())).ReturnsAsync(user);
-            SetupClaim();
-            _business.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<string>())).ReturnsAsync(archive);
+            _business.Setup(b => b.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<string>()))
+                .ReturnsAsync(archive);
 
             var result = await _controller.Delete(id);
 
-            _business.Verify(r => r.GetByIdAsync(id, It.IsAny<string>()), Times.Once);
-            _mockStorage.Verify(s => s.Delete(archive.Path), Times.Once);
-
             result.ShouldBeAssignableTo<NoContentResult>();
-        }
-
-        //Auxiliary
-        private static async Task<byte[]> CreateZipDataClone(List<Archive> archives)
-        {
-            using var memoryStream = new MemoryStream();
-            using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true))
-            {
-                foreach (var item in archives)
-                {
-                    var stream = new MemoryStream(new byte[255]);
-                    if (stream == null)
-                        continue;
-
-                    var zipEntry = archive.CreateEntry(item.FileName, CompressionLevel.Optimal);
-
-                    using var zipStream = zipEntry.Open();
-                    await stream.CopyToAsync(zipStream);
-                }
-            }
-            return memoryStream.ToArray();
-        }
-
-        public void SetupClaim()
-        {
-
-            var mockClaimsPrincipal = new Mock<ClaimsPrincipal>();
-            var mockHttpContext = new Mock<HttpContext>();
-            mockClaimsPrincipal.Setup(c => c.Claims).Returns(new List<Claim>
-            {
-                new Claim("UserId", "123")
-            });
-
-            mockHttpContext.Setup(h => h.User).Returns(mockClaimsPrincipal.Object);
-            _controller.ControllerContext = new ControllerContext
-            {
-                HttpContext = mockHttpContext.Object,
-            };
         }
     }
 }

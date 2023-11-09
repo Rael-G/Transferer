@@ -1,37 +1,25 @@
-﻿using Api.Controllers;
+﻿using Api.Business;
+using Api.Business.Implementation;
+using Api.Controllers;
 using Api.Data.Contexts;
-using Api.Data.Interfaces;
 using Api.Data.Repositories;
-using Api.Extensions;
 using Api.Models;
 using Api.Models.ViewModels;
-using Bogus;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualStudio.TestPlatform.Utilities;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.IO.Abstractions;
-using System.IO.Abstractions.TestingHelpers;
-using System.Linq;
-using System.Net.Mime;
 using System.Security.Claims;
 using System.Text;
-using System.Threading.Tasks;
-using Xunit.Abstractions;
 
 namespace Tests.Integration.Repositories
 {
     public class RepositoryStorageTests
     {
-        private readonly LocalFileStorage _fileStorage;
+        private readonly Mock<UserManager<User>> _userManagerMock;
         private readonly ArchivesController _controller;
-        private readonly IArchiveRepository _archiveRepository;
-        private readonly Mock<UserManager<User>> _mockUserManager;
+        private readonly IArchiveBusiness _archiveBusiness;
 
         public RepositoryStorageTests()
         {
@@ -39,12 +27,18 @@ namespace Tests.Integration.Repositories
                 .UseInMemoryDatabase(databaseName: "InMemoryTestDatabase")
                 .Options);
             var tempPath = Path.Combine(Path.GetTempPath(), "tests");
+            var fileStorage = new LocalFileStorage(tempPath);
+            var archiveRepository = new ArchiveRepository(context);
 
-            _fileStorage = new LocalFileStorage(tempPath);
-            _archiveRepository = new ArchiveRepository(context);
-            _mockUserManager = new Mock<UserManager<User>>(
+            _userManagerMock = new Mock<UserManager<User>>(
                 Mock.Of<IUserStore<User>>(), null, null, null, null, null, null, null, null);
-            _controller = new ArchivesController(_archiveRepository, _fileStorage, _mockUserManager.Object);
+            var mockRoleStore = new Mock<IRoleStore<IdentityRole>>();
+            var mockRoleManager = new Mock<RoleManager<IdentityRole>>(mockRoleStore.Object, null, null, null, null);
+
+            var userRepository = new UserRepository(_userManagerMock.Object, mockRoleManager.Object);
+
+            _archiveBusiness = new ArchiveBusiness(archiveRepository, fileStorage, userRepository);
+            _controller = new ArchivesController(_archiveBusiness);
         }
 
         [Fact]
@@ -67,7 +61,7 @@ namespace Tests.Integration.Repositories
 
 
             SetupClaim(userId);
-            _mockUserManager.Setup(u => u.FindByIdAsync(It.IsAny<string>())).ReturnsAsync(user);
+            _userManagerMock.Setup(u => u.FindByIdAsync(It.IsAny<string>())).ReturnsAsync(user);
 
             var uploadResponse = await _controller.Upload(files);
             var uploadedArchive = (Assert.IsType<OkObjectResult>(uploadResponse).Value as List<ArchiveViewModel>).First();
