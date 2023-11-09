@@ -71,25 +71,22 @@ namespace Api.Controllers
         }
 
         [Authorize(AuthenticationSchemes = "Bearer")]
-        [HttpGet("download/zip/{id}")]
-        public async Task<IActionResult> DownloadZip(string id)
+        [HttpGet("download/zip")]
+        public async Task<IActionResult> DownloadZip([FromQuery] Guid[] guids)
         {
             var userId = _business.GetUserIdFromClaims(User);
-            var parsedIds = _business.ParseIds(id);
-            if (parsedIds == null)
-                return BadRequest();
 
-            var archives = await _business.GetByIdsAsync(parsedIds, userId);
+            var (archives, missingArchives) = await _business.GetByIdsAsync(guids, userId);
 
-            if (!archives.missing.IsNullOrEmpty())
-                return NotFound($"File not found. Id: {archives.missing}");
+            if (!missingArchives.IsNullOrEmpty())
+                return NotFound($"Archive not found. Id: {missingArchives}");
 
-            var zipData = await _business.DownloadMultipleAsync(archives.archives);
+            var (data, missingStreams) = await _business.DownloadMultipleAsync(archives);
 
-            if (!archives.missing.IsNullOrEmpty())
-                return NotFound("File is Missing. Id: " + archives.missing);
+            if (!missingStreams.IsNullOrEmpty())
+                return NotFound($"File is Missing. Id: {missingStreams}");
 
-            return File(zipData.data, "application/zip", "download.zip");
+            return File(data, "application/zip", "download.zip");
         }
 
         [Authorize(AuthenticationSchemes = "Bearer")]

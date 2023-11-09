@@ -1,6 +1,5 @@
 ﻿using Api.Data.Interfaces;
 using Api.Models;
-using Microsoft.AspNetCore.Identity;
 using System.IO.Compression;
 using System.Security.Claims;
 
@@ -37,7 +36,7 @@ namespace Api.Business.Implementation
             {
                 var archive = await GetByIdAsync(id, userId);
                 if (archive == null)
-                    missing = id.ToString() + "; ";
+                    missing += id.ToString() + "; ";
                 archives.Add(archive);
             }
 
@@ -109,20 +108,5 @@ namespace Api.Business.Implementation
 
         public string GetUserIdFromClaims(ClaimsPrincipal user)
             => user.Claims.FirstOrDefault(c => c.Type == "UserId").Value;
-        
-        public Guid[] ParseIds(string ids)
-        {
-            Guid[] idArray;
-
-            try
-            {
-                idArray = ids.Split(',').Select(Guid.Parse).ToArray();
-            }
-            catch (FormatException)
-            {
-                return null;
-            }
-            return idArray;
-        }
     }
 }

@@ -16,6 +16,5 @@ namespace Api.Business
         Task<List<Archive>> UploadAsync(IEnumerable<IFormFile> files, string userId);
         Task DeleteAsync(Archive archive);
         string GetUserIdFromClaims(ClaimsPrincipal user);
-        Guid[]? ParseIds(string ids);
     }
 }
