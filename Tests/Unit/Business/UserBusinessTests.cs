@@ -1,4 +1,5 @@
-﻿using Api.Business.Implementation;
+﻿using Api.Business;
+using Api.Business.Implementation;
 using Api.Data.Interfaces;
 using Api.Models;
 using Api.Models.InputModel;
@@ -21,7 +22,8 @@ namespace Tests.Unit.Business
         public UserBusinessTests() 
         {
             _repository = new Mock<IUserRepository>();
-            _business = new UserBusiness(_repository.Object);
+            var archiveBusiness = new Mock<IArchiveBusiness>();
+            _business = new UserBusiness(_repository.Object, archiveBusiness.Object);
 
             user = new UserBuilder().Build();
             userViewModel = UserViewModel.MapToViewModel(user);
