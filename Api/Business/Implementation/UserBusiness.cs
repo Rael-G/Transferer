@@ -1,9 +1,6 @@
 ﻿using Api.Data.Interfaces;
 using Api.Models;
 using Api.Models.InputModel;
-using Api.Models.ViewModels;
-using Api.Services;
-using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
 
 namespace Api.Business.Implementation
@@ -11,10 +8,12 @@ namespace Api.Business.Implementation
     public class UserBusiness : IUserBusiness
     {
         private readonly IUserRepository _repository;
+        private readonly IArchiveBusiness _archiveBusiness;
 
-        public UserBusiness(IUserRepository repository)
+        public UserBusiness(IUserRepository repository, IArchiveBusiness archiveBusiness)
         {
             _repository = repository;
+            _archiveBusiness = archiveBusiness;
         }
 
         public async Task<User?> GetAsync(string id)
@@ -45,10 +44,11 @@ namespace Api.Business.Implementation
         {
             var user = await _repository.GetByIdAsync(id);
             if (user == null)
-            {
                 return null;
-            }
-
+            
+            foreach (var archive in user.Archives)
+                await _archiveBusiness.DeleteAsync(archive);
+            
             await _repository.DeleteAsync(user.Id);
 
             return user;

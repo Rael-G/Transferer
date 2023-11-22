@@ -40,7 +40,7 @@ namespace Api.Data.Repositories
             return archive;
         }
 
-        public async Task<List<Archive>>GetByIdsAsync(Guid[] ids, string userId)
+        public async Task<List<Archive>> GetByIdsAsync(Guid[] ids, string userId)
         {
             List<Archive> archives = new();
 

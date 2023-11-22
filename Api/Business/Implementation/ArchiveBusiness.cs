@@ -28,6 +28,9 @@ namespace Api.Business.Implementation
         public async Task<Archive?> GetByIdAsync(Guid id, string userId)
             => await _archiveRepository.GetByIdAsync(id, userId);
 
+        public async Task<List<Archive>?> GetByNameAsync(string name, string userId)
+            => await _archiveRepository.GetByNameAsync(name, userId);
+
         public async Task<(List<Archive> archives, string? missing)> GetByIdsAsync(Guid[] ids, string userId)
         {
             List<Archive> archives = new();
@@ -42,9 +45,6 @@ namespace Api.Business.Implementation
 
             return (archives, missing);
         }
-
-        public async Task<List<Archive>?> GetByNameAsync(string name, string userId)
-            => await _archiveRepository.GetByNameAsync(name, userId);
 
         public async Task<List<Archive>> UploadAsync(IEnumerable<IFormFile> files, string userId)
         {
