@@ -21,18 +21,31 @@ namespace Api
 
         public static void ConfigureAPI(this IServiceCollection services)
         {
-            //TODO: extrair a connection string para um metodo que crie o diretorio caso não exista. Deletar o .gitkeep do diretorio
+            var dbDirectory = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "Db");
+
+            if (!Directory.Exists(dbDirectory))
+            {
+                Directory.CreateDirectory(dbDirectory);
+            }
+
             services.AddDbContext<TransfererDbContext>(options =>
-                options.UseSqlite($"Data Source={Directory.GetCurrentDirectory()}\\Storage\\Db\\Transferer.db;"));
+                options.UseSqlite($"Data Source={Path.Combine(dbDirectory, "Transferer.db")};"));
+            
+            var filesDirectory = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "Files");
+
+            if (!Directory.Exists(filesDirectory))
+            {
+                Directory.CreateDirectory(filesDirectory);
+            }
+
+            services.AddScoped<IFileStorage>(provider =>
+                new LocalFileStorage(filesDirectory));
 
             services.AddScoped<IArchiveRepository, ArchiveRepository>();
             services.AddScoped<IUserBusiness, UserBusiness>();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IAuthBusiness, AuthBusiness>();
             services.AddScoped<IArchiveBusiness, ArchiveBusiness>();
-
-            services.AddScoped<IFileStorage>(provider =>
-                new LocalFileStorage($"{Directory.GetCurrentDirectory()}\\Storage\\Files"));
         }
 
         public static void ConfigureAuth(this IServiceCollection services)
@@ -100,7 +113,9 @@ namespace Api
             using var serviceProvider = services.BuildServiceProvider();
             var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
             var userManager = serviceProvider.GetRequiredService<UserManager<User>>();
+            var dbContext = serviceProvider.GetRequiredService<TransfererDbContext>();
 
+            dbContext.Database.Migrate();
             Seeder.Seed(roleManager, userManager);
         }
     }
