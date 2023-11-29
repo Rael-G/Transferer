@@ -19,17 +19,10 @@ namespace Api
         //TODO: Make _secret secret
         public static readonly string _secret = "secret? 50a1b6e3-bfdb-448f-850f-17ff478f833d";
 
-        public static void ConfigureAPI(this IServiceCollection services)
+        public static void ConfigureAPI(this IServiceCollection services, IConfiguration configuration)
         {
-            var dbDirectory = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "Db");
-
-            if (!Directory.Exists(dbDirectory))
-            {
-                Directory.CreateDirectory(dbDirectory);
-            }
-
             services.AddDbContext<TransfererDbContext>(options =>
-                options.UseSqlite($"Data Source={Path.Combine(dbDirectory, "Transferer.db")};"));
+            options.UseNpgsql(configuration.GetConnectionString("Postgres")));
             
             var filesDirectory = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "Files");
 

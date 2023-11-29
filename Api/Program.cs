@@ -6,7 +6,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.ConfigureAPI();
+builder.Services.ConfigureAPI(builder.Configuration);
 builder.Services.ConfigureAuth();
 builder.Services.ConfigureSwagger();
 
