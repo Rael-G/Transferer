@@ -24,7 +24,7 @@ namespace Api
             services.AddDbContext<TransfererDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("Postgres")));
             
-            var filesDirectory = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "Files");
+            var filesDirectory = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
 
             if (!Directory.Exists(filesDirectory))
             {
