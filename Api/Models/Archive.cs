@@ -44,7 +44,7 @@ namespace Api.Models
             ContentType = contentType;
             Length = length;
             Path = path;
-            UploadDate = DateTime.Now;
+            UploadDate = DateTime.UtcNow;
             User = user;
             UserId = user.Id;
         }
