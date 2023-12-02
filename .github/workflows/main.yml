@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4.1.1
+    - name: Test
+      run: dotnet test --verbosity normal ./Tests
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4.1.1
+    - name: Docker Login
+      uses: docker/login-action@v3.0.0
+      with:
+        username: ${{secrets.DockerHubUser}}
+        password: ${{secrets.DockerHubPassword}}
+    - name: Build and push Docker images
+      uses: docker/build-push-action@v5.1.0
+      with:
+        context: .
+        file: ./Api/Dockerfile
+        push: true
+        Tags: |
+          israelgalvan/transferer:latest
