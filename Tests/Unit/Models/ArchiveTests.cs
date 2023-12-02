@@ -1,14 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
+﻿using System.ComponentModel.DataAnnotations;
 using Api.Models;
 using Tests._Builder;
-using Xunit.Sdk;
 
 namespace Tests.Unit.Models
 {
@@ -88,11 +80,11 @@ namespace Tests.Unit.Models
         }
 
         [Fact]
-        public void UploadDateIsWhenConstructorIsCalled()
+        public void UploadDateWhenConstructorIsCalled()
         {
-            var past = DateTime.Now;
+            var past = DateTime.UtcNow;
             Archive archive = new ArchiveBuilder().Build();
-            var future = DateTime.Now;
+            var future = DateTime.UtcNow;
 
             Assert.True(past < archive.UploadDate && archive.UploadDate < future);
         }
