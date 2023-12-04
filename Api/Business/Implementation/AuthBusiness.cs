@@ -24,16 +24,20 @@ namespace Api.Business.Implementation
         public async Task<LoggedUser?> LoginAsync(LogInUser logInUser)
         {
             var user = await _repository.GetByNameAsync(logInUser.UserName);
+            // If the user is not found, return null indicating authentication failure.
             if (user == null)
             {
                 return null;
             }
 
+            // Create a PasswordHasher instance to verify the provided password against the stored hash.
             var passwordHasher = new PasswordHasher<User>();
             var result = passwordHasher
                 .VerifyHashedPassword(user, user.PasswordHash, logInUser.Password);
+            
             string? token = null;
 
+            // If the password verification is successful, generate an authentication token.
             if (result == PasswordVerificationResult.Success)
             {
                 var roles = await _repository.GetRolesAsync(user);

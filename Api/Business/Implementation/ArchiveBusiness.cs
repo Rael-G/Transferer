@@ -71,13 +71,18 @@ namespace Api.Business.Implementation
 
         public async Task<(byte[] data, string? missing)> DownloadMultipleAsync(List<Archive> archives)
         {
+            // Initialize a string to track missing archives and a memory stream to store the zip file content.
             var missing = "";
             using var memoryStream = new MemoryStream();
+
+            // Create a ZipArchive using the memory stream in write mode with compression.
             using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true))
             {
                 foreach (var item in archives)
                 {
                     var stream = await _storage.GetByPathAsync(item.Path);
+
+                    // If the stream is null, the archive is missing, add its name to the missing list.
                     if (stream == null)
                     {
                         missing += $"{item.FileName}; ";
@@ -85,15 +90,17 @@ namespace Api.Business.Implementation
                     }
                     var zipEntry = archive.CreateEntry(item.FileName, CompressionLevel.Optimal);
 
+                    // Open a stream for writing to the zip entry and copy the content from the archive's stream.
                     using var zipStream = zipEntry.Open();
                     stream.CopyTo(zipStream);
                 }
             }
 
+            // Return a tuple containing the byte array of the zip file data and the missing archives string.
             return (memoryStream.ToArray(), missing);
         }
-        
 
+        // Deletes an archive, removes it from the associated user, and deletes the file from storage
         public async Task DeleteAsync(Archive archive)
         {
             var user = archive.User;

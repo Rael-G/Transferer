@@ -17,8 +17,14 @@ namespace Api.Controllers
             _business = business;
         }
 
+        /// <summary>
+        /// Get a list of archives for the authenticated user.
+        /// </summary>
+        /// <returns>Returns a list of archives belonging to the authenticated user.</returns>
         [Authorize(AuthenticationSchemes = "Bearer")]
         [HttpGet("list")]
+        [ProducesResponseType(typeof(IEnumerable<ArchiveViewModel>), 200)]
+        [ProducesResponseType(401)]
         public async Task<IActionResult> List()
         {
             var userId = _business.GetUserIdFromClaims(User);
@@ -28,8 +34,14 @@ namespace Api.Controllers
             return Ok(archivesViewModel);
         }
 
+        /// <summary>
+        /// Get a list of all archives (admin role required).
+        /// </summary>
+        /// <returns>Returns a list of all archives in the system.</returns>
         [Authorize(AuthenticationSchemes = "Bearer", Roles = "admin")]
         [HttpGet("listall")]
+        [ProducesResponseType(typeof(IEnumerable<ArchiveViewModel>), 200)]
+        [ProducesResponseType(401)]
         public async Task<IActionResult> ListAll()
         {
             var archives = await _business.GetAllAsync();
@@ -38,8 +50,16 @@ namespace Api.Controllers
             return Ok(archivesViewModel);
         }
 
+        /// <summary>
+        /// Search for archives by name for the authenticated user.
+        /// </summary>
+        /// <param name="name">The name to search for.</param>
+        /// <returns>Returns a list of archives matching the specified name for the authenticated user.</returns>
         [Authorize(AuthenticationSchemes = "Bearer")]
         [HttpGet("search/{name}")]
+        [ProducesResponseType(typeof(IEnumerable<ArchiveViewModel>), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
         public async Task<IActionResult> Search(string name)
         {
             if (string.IsNullOrWhiteSpace(name))
@@ -54,8 +74,16 @@ namespace Api.Controllers
             return Ok(archivesViewModel);
         }
 
+        /// <summary>
+        /// Download a specific archive by its ID for the authenticated user.
+        /// </summary>
+        /// <param name="id">The ID of the archive to download.</param>
+        /// <returns>Returns the file content of the specified archive for the authenticated user.</returns>
         [Authorize(AuthenticationSchemes = "Bearer")]
         [HttpGet("download/{id}")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(404)]
         public async Task<IActionResult> Download(Guid id)
         {
             var userId = _business.GetUserIdFromClaims(User);
@@ -70,8 +98,17 @@ namespace Api.Controllers
             return File(stream, archive.ContentType, archive.FileName);
         }
 
+        /// <summary>
+        /// Download multiple archives as a zip file for the authenticated user.
+        /// </summary>
+        /// <param name="guids">Array of archive IDs to download.</param>
+        /// <returns>Returns a zip file containing the specified archives for the authenticated user.</returns>
         [Authorize(AuthenticationSchemes = "Bearer")]
         [HttpGet("download/zip")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(404)]
         public async Task<IActionResult> DownloadZip([FromQuery] Guid[] guids)
         {
             var userId = _business.GetUserIdFromClaims(User);
@@ -89,8 +126,16 @@ namespace Api.Controllers
             return File(data, "application/zip", "download.zip");
         }
 
+        /// <summary>
+        /// Upload one or more files for the authenticated user.
+        /// </summary>
+        /// <param name="files">The files to upload.</param>
+        /// <returns>Returns information about the uploaded archives for the authenticated user.</returns>
         [Authorize(AuthenticationSchemes = "Bearer")]
         [HttpPost("upload")]
+        [ProducesResponseType(typeof(IEnumerable<ArchiveViewModel>), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
         public async Task<IActionResult> Upload(IEnumerable<IFormFile> files)
         {
             if (files == null || !files.Any())
@@ -103,8 +148,16 @@ namespace Api.Controllers
             return Ok(viewModel);
         }
 
+        /// <summary>
+        /// Delete a specific archive by its ID for the authenticated user.
+        /// </summary>
+        /// <param name="id">The ID of the archive to delete.</param>
+        /// <returns>Returns a success response if the deletion is successful for the authenticated user.</returns>
         [Authorize(AuthenticationSchemes = "Bearer")]
         [HttpDelete("delete/{id}")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(404)]
         public async Task<IActionResult> Delete(Guid id)
         {
             var userId = _business.GetUserIdFromClaims(User);

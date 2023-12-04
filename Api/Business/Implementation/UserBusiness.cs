@@ -45,7 +45,8 @@ namespace Api.Business.Implementation
             var user = await _repository.GetByIdAsync(id);
             if (user == null)
                 return null;
-            
+
+            // Delete all user archives.
             foreach (var archive in user.Archives)
                 await _archiveBusiness.DeleteAsync(archive);
             

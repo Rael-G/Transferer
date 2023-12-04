@@ -98,6 +98,16 @@ namespace Api
                         Array.Empty<string>()
                     }
                 });
+
+                c.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Title = "Transferer.Api",
+                });
+
+                var xmlFile = "Api.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                c.IncludeXmlComments(xmlPath);
+
             });
         }
 
