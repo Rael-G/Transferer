@@ -1,11 +1,6 @@
 ﻿using Api.Models;
 using Bogus;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Tests._Builder
 {
@@ -27,7 +22,7 @@ namespace Tests._Builder
             _contentType = _faker.System.MimeType();
             _length = _faker.Random.Long(1, 1024);
             _path = _faker.System.FilePath();
-            _user = new User();
+            _user = UserBuilder.BuildUser();
         }
 
         public ArchiveBuilder SetId(int id)
@@ -57,6 +52,12 @@ namespace Tests._Builder
         public ArchiveBuilder SetPath(string path)
         {
             _path = path;
+            return this;
+        }
+
+        public ArchiveBuilder SetUser(User user)
+        {
+            _user = user;
             return this;
         }
 

@@ -58,11 +58,11 @@ namespace Tests.Unit.Controllers
 
             var result = await _controller.Get(_user.Id);
 
-            result.ShouldBeAssignableTo<OkObjectResult>();
-            var objResult = result as OkObjectResult;
-            objResult.Value.ShouldBeAssignableTo<UserViewModel>();
-            var viewModel = objResult.Value as UserViewModel;
-            viewModel.Id.ShouldBe(_user.Id);
+            result.ShouldBeAssignableTo<OkObjectResult>()
+                .ShouldNotBeNull()
+                .Value.ShouldBeAssignableTo<UserViewModel>()
+                .ShouldNotBeNull()
+                .Id.ShouldBe(_user.Id);
         }
 
         [Theory]
@@ -95,11 +95,13 @@ namespace Tests.Unit.Controllers
 
             var result = await _controller.Search(_user.UserName);
 
-            result.ShouldBeAssignableTo<OkObjectResult>();
-            var objResult = result as OkObjectResult;
-            objResult.Value.ShouldBeAssignableTo<UserViewModel>();
-            var viewModel = objResult.Value as UserViewModel;
-            viewModel.Id.ShouldBe(_user.Id);
+            result.ShouldBeAssignableTo<OkObjectResult>()
+                .ShouldNotBeNull()
+                .Value.ShouldBeAssignableTo<UserViewModel>()
+                .ShouldNotBeNull()
+                .ShouldBeAssignableTo<UserViewModel>()
+                .ShouldNotBeNull()
+                .Id.ShouldBe(_user.Id);
         }
 
         [Fact]
@@ -129,9 +131,9 @@ namespace Tests.Unit.Controllers
 
             var result = await _controller.Edit(_userInputModel);
 
-            result.ShouldBeAssignableTo<BadRequestObjectResult>();
-            var badResult = result as BadRequestObjectResult;
-            badResult.Value.ShouldBe(msg);
+            result.ShouldBeAssignableTo<BadRequestObjectResult>()
+                .ShouldNotBeNull()
+                .Value.ShouldBe(msg);
         }
 
         [Fact]

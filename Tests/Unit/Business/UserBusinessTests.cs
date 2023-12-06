@@ -86,6 +86,19 @@ namespace Tests.Unit.Business
             var result = await _business.EditAsync(user, userInputModel);
 
             _repository.Verify(r => r.UpdateAsync(user, userInputModel), Times.Once);
+            result.ShouldBeNull();
+        }
+
+        [Fact]
+        public async void EditAsync_WhenUpdateFails_ReturnsErrorMessage()
+        {
+            var errorMsg = "Update failed";
+            _repository.Setup(r => r.UpdateAsync(user, userInputModel)).ReturnsAsync(errorMsg);
+
+            var result = await _business.EditAsync(user, userInputModel);
+
+            _repository.Verify(r => r.UpdateAsync(user, userInputModel), Times.Once);
+            result.ShouldBe(errorMsg);
         }
 
         [Fact]
@@ -108,6 +121,24 @@ namespace Tests.Unit.Business
             var result = await _business.RemoveAsync(userViewModel.Id);
 
             _repository.Verify(r => r.DeleteAsync(userViewModel.Id), Times.Once);
+        }
+
+        [Fact]
+        public async void RemoveAsync_CallsDeleteAsyncOnArchiveBusinessForEachArchive()
+        {
+            _repository.Setup(r => r.GetByIdAsync(user.Id)).ReturnsAsync(user);
+
+            var archive1 = new ArchiveBuilder().Build();
+            var archive2 = new ArchiveBuilder().Build();
+            user.Archives = new List<Archive> { archive1, archive2 };
+
+            var archiveBusiness = new Mock<IArchiveBusiness>();
+            _business = new UserBusiness(_repository.Object, archiveBusiness.Object);
+
+            var result = await _business.RemoveAsync(user.Id);
+
+            archiveBusiness.Verify(a => a.DeleteAsync(archive1), Times.Once);
+            archiveBusiness.Verify(a => a.DeleteAsync(archive2), Times.Once);
         }
     }
 }

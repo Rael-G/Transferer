@@ -13,7 +13,7 @@ using Moq;
 using System.Security.Claims;
 using System.Text;
 
-namespace Tests.Integration.Repositories
+namespace Tests.Integration
 {
     public class RepositoryStorageTests
     {

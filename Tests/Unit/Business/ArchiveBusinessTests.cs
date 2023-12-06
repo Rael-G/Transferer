@@ -5,6 +5,7 @@ using Api.Models;
 using Microsoft.AspNetCore.Http;
 using Moq;
 using Shouldly;
+using System.Security.Claims;
 using Tests._Builder;
 
 namespace Tests.Unit.Business
@@ -31,6 +32,19 @@ namespace Tests.Unit.Business
             _business = new ArchiveBusiness(_archiveRepository.Object, _storage.Object, _userRepository.Object);
         }
 
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        public async void GetAllAsync_WithNullOrEmptyUserId_ReturnsAllArchives(string userId)
+        {
+            _archiveRepository.Setup(r => r.GetAllAsync(userId)).ReturnsAsync(new List<Archive>());
+
+            var result = await _business.GetAllAsync(userId);
+
+            result.ShouldNotBeNull().ShouldBeEmpty();
+            _archiveRepository.Verify(r => r.GetAllAsync(userId), Times.Once);
+        }
+
         [Fact]
         public async void GetByIds_IfArchivesAreMissing_ReturnsMissingArchivesIdInString()
         {
@@ -39,14 +53,14 @@ namespace Tests.Unit.Business
                 .ReturnsAsync(() => null);
             var result = await _business.GetByIdsAsync(ids, _userId);
 
-            result.missing.ShouldContain(_guid.ToString());
+            result.missing.ShouldNotBeNull()
+                .ShouldContain(_guid.ToString());
         }
 
         [Fact]
         public async void GetByIds_IfArchivesAreFound_ReturnsEmptyMissingStringAndArchives()
         {
             var ids = new Guid[] { _guid };
-            var emptyMissing = "";
             _archiveRepository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<string>()))
                 .ReturnsAsync(_archive);
             var result = await _business.GetByIdsAsync(ids, _userId);
@@ -80,9 +94,27 @@ namespace Tests.Unit.Business
             _archiveRepository.Verify(a => a.SaveAsync(It.IsAny<Archive>()), Times.Once);
             _userRepository.Verify(u => u.UpdateAsync(_user), Times.Once);
 
-            result.FirstOrDefault().FileName.ShouldBe(fileName);
-            result.FirstOrDefault().ContentType.ShouldBe(contentType);
+            result.ShouldNotBeNull()
+                .FirstOrDefault()
+                .ShouldNotBeNull()
+                .FileName.ShouldBe(fileName);
 
+            result.ShouldNotBeNull()
+                .ShouldNotBeNull()
+                .FirstOrDefault()
+                .ShouldNotBeNull()
+                .ContentType.ShouldBe(contentType);
+        }
+
+        [Fact]
+        public async void DownloadAsync_ReturnsCorrectStream()
+        {
+            _storage.Setup(s => s.GetByPathAsync(It.IsAny<string>())).ReturnsAsync(new MemoryStream());
+
+            var result = await _business.DownloadAsync(_archive);
+
+            result.ShouldNotBeNull().ShouldBeAssignableTo<Stream>();
+            _storage.Verify(s => s.GetByPathAsync(It.IsAny<string>()), Times.Once);
         }
 
         [Fact]
@@ -95,14 +127,14 @@ namespace Tests.Unit.Business
 
             var result = await _business.DownloadMultipleAsync(archives);
 
-            result.missing.ShouldContain(archive.FileName);
+            result.missing.ShouldNotBeNull()
+                .ShouldContain(archive.FileName);
         }
 
         [Fact]
         public async void DownloadMultiple_IfArchivesAreFound_ReturnsEmptyMissingStringAndZip()
         {
             var stream = new MemoryStream();
-            var emptyMissing = "";
             var archives = ArchiveBuilder.BuildArchives(1);
 
             _storage.Setup(r => r.GetByPathAsync(It.IsAny<string>()))
@@ -110,9 +142,33 @@ namespace Tests.Unit.Business
 
             var result = await _business.DownloadMultipleAsync(archives);
 
-
             result.missing.ShouldBeEmpty();
             result.data.Length.ShouldBeGreaterThan(0);
+        }
+
+        [Fact]
+        public async void DeleteAsync_RemovesArchiveFromUserAndDeletesFile()
+        {
+            _userRepository.Setup(u => u.UpdateAsync(It.IsAny<User>()));
+            _storage.Setup(s => s.DeleteAsync(It.IsAny<string>()));
+
+            await _business.DeleteAsync(_archive);
+
+            _userRepository.Verify(u => u.UpdateAsync(It.IsAny<User>()), Times.Once);
+            _storage.Verify(s => s.DeleteAsync(It.IsAny<string>()), Times.Once);
+        }
+
+        [Fact]
+        public void GetUserIdFromClaims_ExtractsUserIdFromClaims()
+        {
+            var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
+            {
+                new Claim("UserId", _userId)
+            }));
+
+            var result = _business.GetUserIdFromClaims(claimsPrincipal);
+
+            result.ShouldNotBeNull().ShouldBe(_userId);
         }
     }
 }

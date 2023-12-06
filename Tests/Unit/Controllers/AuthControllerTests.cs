@@ -1,9 +1,7 @@
 ﻿using Api.Business;
 using Api.Controllers;
-using Api.Models;
 using Api.Models.InputModel;
 using Api.Models.ViewModels;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Shouldly;
@@ -38,11 +36,8 @@ namespace Tests.Unit.Controllers
         [Fact]
         public async void Login_WhenTokenIsNull_ReturnsBadRequest()
         {
-            var loggedUserWithNullToken = _loggedUser;
-            loggedUserWithNullToken.Token = null;
-
             _business.Setup(b => b.LoginAsync(_logInUser))
-                .ReturnsAsync(loggedUserWithNullToken);
+            .ReturnsAsync(new LoggedUser { Token = null });
 
             var result = await _controller.LogIn(_logInUser);
 
@@ -53,13 +48,13 @@ namespace Tests.Unit.Controllers
         public async void Login_Sucess_ReturnsOkWithLogedUser()
         {
             _business.Setup(b => b.LoginAsync(_logInUser))
-                .ReturnsAsync(_loggedUser);
+            .ReturnsAsync(_loggedUser);
 
             var result = await _controller.LogIn(_logInUser);
 
-            result.ShouldBeAssignableTo<OkObjectResult>();
-            var okResult = result as OkObjectResult;
-            okResult.Value.ShouldBe(_loggedUser);
+            result.ShouldBeAssignableTo<OkObjectResult>()
+                .ShouldNotBeNull()
+                .Value.ShouldBe(_loggedUser);
         }
 
         [Theory]
@@ -68,15 +63,13 @@ namespace Tests.Unit.Controllers
         public async void Signin_WhenModelStateInvalid_ReturnsBadRequestResult(string userName)
         {
             var emptyNameUser = new LogInUser(userName, _logInUser.Password);
+            _controller.ModelState.AddModelError("UserName", "The field is required");
 
-            var controller = new AuthController(_business.Object);
-            controller.ModelState.AddModelError("UserName", "The field is required");
+            var result = await _controller.SignIn(emptyNameUser);
 
-            var result = await controller.SignIn(emptyNameUser);
-
-            result.ShouldBeAssignableTo<BadRequestObjectResult>();
-            var badRequestResult = result as BadRequestObjectResult;
-            badRequestResult.Value.ShouldBeAssignableTo<SerializableError>();
+            result.ShouldBeAssignableTo<BadRequestObjectResult>()
+                .ShouldNotBeNull()
+                .Value.ShouldBeAssignableTo<SerializableError>();
         }
 
         [Theory]
@@ -84,34 +77,30 @@ namespace Tests.Unit.Controllers
         [InlineData("")]
         public async void Signin_WhenCreateFails_ReturnsBadRequestWithResult(string password)
         {
-            var msg = "Failed";
-            LogInUser emptyPasswordUser = new(_logInUser.UserName, password);
+            var errorMsg = "Failed";
+            var emptyPasswordUser = new LogInUser(_logInUser.UserName, password);
 
             _business.Setup(b => b.CreateAsync(emptyPasswordUser))
-                .ReturnsAsync(msg);
+                .ReturnsAsync(errorMsg);
 
-            IActionResult result = await _controller.SignIn(emptyPasswordUser);
+            var result = await _controller.SignIn(emptyPasswordUser);
 
-            result.ShouldBeAssignableTo<BadRequestObjectResult>();
-            var badRequestResult = result as BadRequestObjectResult;
-            badRequestResult.Value.ShouldBe(msg);
+            result.ShouldBeAssignableTo<BadRequestObjectResult>()
+                .ShouldNotBeNull()
+                .Value.ShouldBe(errorMsg);
         }
 
         [Fact]
         public async void Signin_WhenSucess_ReturnsOkWithLogedUser()
         {
-            IdentityResult createResult = IdentityResult.Success;
-
-            _business.Setup(b => b.CreateAsync(_logInUser))
-                .ReturnsAsync(() => null);
-            _business.Setup(b => b.LoginAsync(_logInUser))
-                .ReturnsAsync(_loggedUser);
+            _business.Setup(b => b.CreateAsync(_logInUser)).ReturnsAsync(() => null);
+            _business.Setup(b => b.LoginAsync(_logInUser)).ReturnsAsync(_loggedUser);
 
             var result = await _controller.SignIn(_logInUser);
 
-            result.ShouldBeAssignableTo<OkObjectResult>();
-            var createdResult = result as OkObjectResult;
-            createdResult.Value.ShouldBe(_loggedUser);
+            result.ShouldBeAssignableTo<OkObjectResult>()
+                .ShouldNotBeNull()
+                .Value.ShouldBe(_loggedUser);
         }
     }
 }
