@@ -13,7 +13,7 @@ This API provides functionality for managing user-specific archives. It requires
 
 ## Auth Controller:
 This controller handles user authentication and authorization. 
-*** POST /login:** Logs in a user with provided credentials.
+* **POST /login:** Logs in a user with provided credentials.
 * **POST /signin:** Creates a new user with provided credentials.
 
 ## Users Controller: 
