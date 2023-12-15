@@ -16,12 +16,9 @@ namespace Api
 {
     public static class Settings
     {
-        //TODO: Make _secret secret
-        public static string SecretKey { get; private set; } = string.Empty;
-
         public static void ConfigureAPI(this IServiceCollection services, IConfiguration configuration)
         {
-            SecretKey = configuration["Secrets:SecretKey"] 
+            TokenService.SecretKey = configuration["Secrets:SecretKey"] 
                 ?? throw new ArgumentNullException("SecretKey", "Secret Key is not defined in appsettings.");
 
             services.AddCors(options => options.AddDefaultPolicy(builder =>
@@ -54,7 +51,7 @@ namespace Api
         {
             services.AddScoped<TransfererDbContext, TransfererDbContext>();
 
-            var key = Encoding.ASCII.GetBytes(SecretKey);
+            var key = Encoding.ASCII.GetBytes(TokenService.SecretKey);
 
             services.AddAuthentication(a =>
             {

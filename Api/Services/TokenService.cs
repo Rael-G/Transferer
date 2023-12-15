@@ -8,6 +8,8 @@ namespace Api.Services
 {
     public static class TokenService
     {
+        public static string SecretKey { get; set; } = string.Empty;
+
         public const int MinutesToExpiry = 30;
 
         public const int DaysToExpiry = 7;
@@ -53,7 +55,7 @@ namespace Api.Services
         /// <returns>The ClaimsPrincipal extracted from the token.</returns>
         public static ClaimsPrincipal GetPrincipalFromExpiredToken(string token)
         {
-            var key = Encoding.ASCII.GetBytes(Settings.SecretKey);
+            var key = Encoding.ASCII.GetBytes(SecretKey);
 
             var tokenValidationParameters = new TokenValidationParameters
             {
@@ -81,7 +83,7 @@ namespace Api.Services
         private static string GenerateAccessToken(ClaimsIdentity claimsIdentity)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(Settings.SecretKey);
+            var key = Encoding.ASCII.GetBytes(SecretKey);
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
