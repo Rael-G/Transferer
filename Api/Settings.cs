@@ -17,10 +17,19 @@ namespace Api
     public static class Settings
     {
         //TODO: Make _secret secret
-        public static readonly string _secret = "secret? 50a1b6e3-bfdb-448f-850f-17ff478f833d";
+        public static string SecretKey { get; private set; } = string.Empty;
 
         public static void ConfigureAPI(this IServiceCollection services, IConfiguration configuration)
         {
+            SecretKey = configuration["Secrets:SecretKey"] 
+                ?? throw new ArgumentNullException("SecretKey", "Secret Key is not defined in appsettings.");
+
+            services.AddCors(options => options.AddDefaultPolicy(builder =>
+            {
+                builder.AllowAnyOrigin()
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+            }));
             services.AddDbContext<TransfererDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("Postgres")));
             
@@ -45,7 +54,7 @@ namespace Api
         {
             services.AddScoped<TransfererDbContext, TransfererDbContext>();
 
-            var key = Encoding.ASCII.GetBytes(_secret);
+            var key = Encoding.ASCII.GetBytes(SecretKey);
 
             services.AddAuthentication(a =>
             {
@@ -68,8 +77,6 @@ namespace Api
                 .AddEntityFrameworkStores<TransfererDbContext>()
                 .AddDefaultTokenProviders();
             services.AddAuthorization();
-
-            SeedData(services);
         }
 
         public static void ConfigureSwagger(this IServiceCollection services)
@@ -111,14 +118,14 @@ namespace Api
             });
         }
 
-        private static void SeedData(IServiceCollection services)
+        public static void InitializeDb(this WebApplication app)
         {
-            using var serviceProvider = services.BuildServiceProvider();
+            using var scope = app.Services.CreateScope();
+            var serviceProvider = scope.ServiceProvider;
+
             var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
             var userManager = serviceProvider.GetRequiredService<UserManager<User>>();
-            var dbContext = serviceProvider.GetRequiredService<TransfererDbContext>();
 
-            dbContext.Database.Migrate();
             Seeder.Seed(roleManager, userManager);
         }
     }
