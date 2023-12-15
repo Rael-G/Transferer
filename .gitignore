@@ -402,3 +402,6 @@ Api/Storage/Db/*
 Api/Storage/Files/*
 .vscode/
 todo.txt
+**/Properties/*
+**/appsettings.json
+**/appsettings.Development.json
