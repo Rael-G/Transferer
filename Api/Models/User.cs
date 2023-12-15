@@ -8,6 +8,10 @@ namespace Api.Models
         [JsonIgnore]
         public List<Archive> Archives { get; set; }
 
+        public string? RefreshToken { get; set; }
+
+        public DateTime? RefreshTokenExpiryTime { get; set; }
+
         public User() : base()
         {
             Archives = new List<Archive>();
