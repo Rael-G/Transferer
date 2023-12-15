@@ -28,19 +28,19 @@ namespace Api.Controllers
         [ProducesResponseType(400)]
         public async Task<IActionResult> LogIn(LogInUser logInUser)
         {
-            var loggedUser = await _business.LoginAsync(logInUser);
+            var tokenViewModel = await _business.LoginAsync(logInUser);
 
-            if (loggedUser == null)
+            if (tokenViewModel is null)
             {
                 return NotFound("User not found.");
             }
 
-            if (loggedUser.Token == null)
+            if (tokenViewModel.AccessToken is null)
             {
                 return BadRequest("Incorrect password.");
             }
 
-            return Ok(loggedUser);
+            return Ok(tokenViewModel);
         }
 
         /// <summary>
@@ -67,9 +67,11 @@ namespace Api.Controllers
                 return BadRequest(result);
             }
 
-            var loggedUser = await _business.LoginAsync(logInUser);
+            var tokenVM = await _business.LoginAsync(logInUser);
 
-            return Ok(loggedUser);
+            return Ok(tokenVM);
         }
+
+        
     }
 }

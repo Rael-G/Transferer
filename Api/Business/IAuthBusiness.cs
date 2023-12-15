@@ -12,7 +12,7 @@ namespace Api.Business
         /// <returns>
         /// A string containing an error message if the creation fails; otherwise, returns null.
         /// </returns>
-        Task<LoggedUser?> LoginAsync(LogInUser logInUser);
+        Task<TokenViewModel?> LoginAsync(LogInUser logInUser);
 
         /// <summary>
         /// Authenticates a user based on the provided login information.
