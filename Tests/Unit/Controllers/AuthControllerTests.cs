@@ -14,7 +14,8 @@ namespace Tests.Unit.Controllers
         private readonly AuthController _controller;
 
         private readonly LogInUser _logInUser = new("Batatinha", "Batata123!");
-        private readonly LoggedUser _loggedUser = new() { UserName = "Batatinha", Token = "token" };
+        private readonly TokenViewModel _tokenModel = new() 
+        { AccessToken = Guid.NewGuid().ToString(), RefreshToken = Guid.NewGuid().ToString() };
 
         public AuthControllerTests()
         {
@@ -37,7 +38,7 @@ namespace Tests.Unit.Controllers
         public async void Login_WhenTokenIsNull_ReturnsBadRequest()
         {
             _business.Setup(b => b.LoginAsync(_logInUser))
-            .ReturnsAsync(new LoggedUser { Token = null });
+            .ReturnsAsync(new TokenViewModel { AccessToken = null });
 
             var result = await _controller.LogIn(_logInUser);
 
@@ -48,13 +49,13 @@ namespace Tests.Unit.Controllers
         public async void Login_Sucess_ReturnsOkWithLogedUser()
         {
             _business.Setup(b => b.LoginAsync(_logInUser))
-            .ReturnsAsync(_loggedUser);
+            .ReturnsAsync(_tokenModel);
 
             var result = await _controller.LogIn(_logInUser);
 
             result.ShouldBeAssignableTo<OkObjectResult>()
                 .ShouldNotBeNull()
-                .Value.ShouldBe(_loggedUser);
+                .Value.ShouldBe(_tokenModel);
         }
 
         [Theory]
@@ -94,13 +95,13 @@ namespace Tests.Unit.Controllers
         public async void Signin_WhenSucess_ReturnsOkWithLogedUser()
         {
             _business.Setup(b => b.CreateAsync(_logInUser)).ReturnsAsync(() => null);
-            _business.Setup(b => b.LoginAsync(_logInUser)).ReturnsAsync(_loggedUser);
+            _business.Setup(b => b.LoginAsync(_logInUser)).ReturnsAsync(_tokenModel);
 
             var result = await _controller.SignIn(_logInUser);
 
             result.ShouldBeAssignableTo<OkObjectResult>()
                 .ShouldNotBeNull()
-                .Value.ShouldBe(_loggedUser);
+                .Value.ShouldBe(_tokenModel);
         }
     }
 }

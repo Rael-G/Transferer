@@ -4,6 +4,7 @@ using Api.Data.Interfaces;
 using Moq;
 using Shouldly;
 using Tests._Builder;
+using Api.Services;
 
 namespace Tests.Unit.Business
 {
@@ -66,7 +67,7 @@ namespace Tests.Unit.Business
             var result = await _business.LoginAsync(_logInUser);
 
             result.ShouldNotBeNull();
-            result.Token.ShouldBeNull();
+            result.AccessToken.ShouldBeNull();
         }
 
         [Fact]
@@ -74,6 +75,7 @@ namespace Tests.Unit.Business
         {
             var user = new UserBuilder().SetName(_logInUser.UserName)
                 .SetPassword(_logInUser.Password).Build();
+            TokenService.SecretKey = Guid.NewGuid().ToString();
 
             _repository.Setup(r => r.GetByNameAsync(It.IsAny<string>()))
                 .ReturnsAsync(user);
@@ -83,8 +85,7 @@ namespace Tests.Unit.Business
             var result = await _business.LoginAsync(_logInUser);
 
             result.ShouldNotBeNull();
-            result.UserName.ShouldBe(_logInUser.UserName);
-            result.Token.ShouldNotBeNull();
+            result.AccessToken.ShouldNotBeNull();
         }
     }
 }
