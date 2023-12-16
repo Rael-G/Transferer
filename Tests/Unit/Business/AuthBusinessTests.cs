@@ -56,7 +56,7 @@ namespace Tests.Unit.Business
         }
 
         [Fact]
-        public async void LoginAsync_WhenPasswordFail_ReturnsLoggedUserWithTokenNull()
+        public async void LoginAsync_WhenPasswordFail_ReturnsNull()
         {
             var user = new UserBuilder()
                 .SetName(_logInUser.UserName).Build();
@@ -66,8 +66,7 @@ namespace Tests.Unit.Business
 
             var result = await _business.LoginAsync(_logInUser);
 
-            result.ShouldNotBeNull();
-            result.AccessToken.ShouldBeNull();
+            result.ShouldBeNull();
         }
 
         [Fact]

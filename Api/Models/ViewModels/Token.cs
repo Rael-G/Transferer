@@ -1,6 +1,6 @@
 ﻿namespace Api.Models.ViewModels
 {
-    public record TokenViewModel
+    public record Token
     {
         public string AccessToken { get; set; }
         public DateTime Creation { get; set; }

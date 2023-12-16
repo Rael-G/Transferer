@@ -1,4 +1,5 @@
 ﻿using Api.Models;
+using Api.Models.ViewModels;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -8,52 +9,52 @@ namespace Api.Services
 {
     public static class TokenService
     {
+        /// <summary>
+        /// Gets or sets the secret key used for token generation and validation.
+        /// </summary>
         public static string SecretKey { get; set; } = string.Empty;
 
+        /// <summary>
+        /// Specifies the default expiration time for access tokens in minutes.
+        /// </summary>
         public const int MinutesToExpiry = 30;
 
+        /// <summary>
+        /// Specifies the default expiration time for refresh tokens in days.
+        /// </summary>
         public const int DaysToExpiry = 7;
 
         /// <summary>
-        /// Generates a JWT token for the specified user and user roles.
+        /// Generates an authentication token for the specified user and user roles.
         /// </summary>
         /// <param name="user">The user for whom the token is generated.</param>
         /// <param name="userRoles">The roles associated with the user.</param>
-        /// <returns>The generated JWT token as a string.</returns>
-        public static string GenerateAccessToken(User user, List<string> userRoles)
-        {
-            var claimsIdentity = GenerateClaimsIdentity(user, userRoles);
+        /// <returns>The generated authentication token.</returns>
+        public static Token GenerateToken(User user, List<string> userRoles)
+        {   
+            var accessToken = GenerateAccessToken(user, userRoles);
 
-            return GenerateAccessToken(claimsIdentity);
+            return GenerateToken(accessToken);
         }
 
         /// <summary>
-        /// Generates a JWT token based on the provided claims.
+        /// Generates an authentication token based on the provided claims.
         /// </summary>
         /// <param name="claims">The claims to include in the token.</param>
-        /// <returns>The generated JWT token as a string.</returns>
-        public static string GenerateAccessToken(IEnumerable<Claim> claims)
+        /// <returns>The generated authentication token.</returns>
+        public static Token GenerateToken(IEnumerable<Claim> claims)
         {
-            var claimsIdentity = GenerateClaimsIdentity(claims);
+            var accessToken = GenerateAccessToken(claims);
 
-            return GenerateAccessToken(claimsIdentity);
+            return GenerateToken(accessToken);
         }
 
         /// <summary>
-        /// Generates a refresh token using a new Guid.
+        /// Retrieves a ClaimsPrincipal from a JWT token.
         /// </summary>
-        /// <returns>The generated refresh token as a string.</returns>
-        public static string GenerateRefreshToken()
-        {
-            return Guid.NewGuid().ToString();
-        }
-
-        /// <summary>
-        /// Retrieves a ClaimsPrincipal from an expired JWT token.
-        /// </summary>
-        /// <param name="token">The expired JWT token.</param>
+        /// <param name="token">The JWT token.</param>
         /// <returns>The ClaimsPrincipal extracted from the token.</returns>
-        public static ClaimsPrincipal GetPrincipalFromExpiredToken(string token)
+        public static ClaimsPrincipal GetPrincipalFromToken(string token)
         {
             var key = Encoding.ASCII.GetBytes(SecretKey);
 
@@ -71,15 +72,37 @@ namespace Api.Services
                 !jwtSecurityToken.Header.Alg.Equals
                 (SecurityAlgorithms.HmacSha256, StringComparison.InvariantCulture))
                 throw new SecurityTokenException("Invalid Token.");
-            
+
             return principal;
         }
 
-        /// <summary>
-        /// Generates a JWT token based on the provided claims identity.
-        /// </summary>
-        /// <param name="claimsIdentity">The claims identity for the token.</param>
-        /// <returns>The generated JWT token as a string.</returns>
+        private static Token GenerateToken(string accessToken)
+        {
+            var now = DateTime.UtcNow;
+            return new Token
+            {
+                AccessToken = accessToken,
+                RefreshToken = GenerateRefreshToken(),
+                Creation = now,
+                Expiration = now.AddMinutes(MinutesToExpiry)
+            };
+        }
+
+        private static string GenerateAccessToken(User user, List<string> userRoles)
+        {
+            var claimsIdentity = GenerateClaimsIdentity(user, userRoles);
+
+            return GenerateAccessToken(claimsIdentity);
+        }
+
+        private static string GenerateAccessToken(IEnumerable<Claim> claims)
+        {
+            var claimsIdentity = GenerateClaimsIdentity(claims);
+
+            return GenerateAccessToken(claimsIdentity);
+        }
+
+        // Generates a JWT token based on the provided claims identity.
         private static string GenerateAccessToken(ClaimsIdentity claimsIdentity)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -100,12 +123,12 @@ namespace Api.Services
             return tokenHandler.WriteToken(token);
         }
 
-        /// <summary>
-        /// Generates the claims for the JWT token, including user-specific and role claims.
-        /// </summary>
-        /// <param name="user">The user for whom the claims are generated.</param>
-        /// <param name="userRoles">The roles associated with the user.</param>
-        /// <returns>A ClaimsIdentity containing user-specific and role claims.</returns>
+        private static string GenerateRefreshToken()
+        {
+            return Guid.NewGuid().ToString();
+        }
+
+        // Generates the claims for the JWT token, including user-specific and role claims.
         private static ClaimsIdentity GenerateClaimsIdentity(User user, List<string> userRoles) 
         {
             var claimsIdentity = new ClaimsIdentity(new[]
@@ -122,11 +145,6 @@ namespace Api.Services
             return claimsIdentity;
         }
 
-        /// <summary>
-        /// Generates a ClaimsIdentity based on the provided claims.
-        /// </summary>
-        /// <param name="claims">The claims to include in the identity.</param>
-        /// <returns>A ClaimsIdentity containing the provided claims.</returns>
         private static ClaimsIdentity GenerateClaimsIdentity(IEnumerable<Claim> claims)
         {
             var claimsIdentity = new ClaimsIdentity(claims);

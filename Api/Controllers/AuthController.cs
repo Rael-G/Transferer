@@ -20,24 +20,23 @@ namespace Api.Controllers
         /// </summary>
         /// <param name="logInUser">The user credentials for login.</param>
         /// <returns>Returns the logged-in user information, including a token.</returns>
-        [HttpPost()]
-        [Route("login")]
+        [HttpPost("login")]
         [AllowAnonymous]
         [ProducesResponseType(typeof(UserViewModel), 200)]
         [ProducesResponseType(404)]
         [ProducesResponseType(400)]
         public async Task<IActionResult> LogIn(LogInUser logInUser)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             var tokenViewModel = await _business.LoginAsync(logInUser);
 
             if (tokenViewModel is null)
             {
-                return NotFound("User not found.");
-            }
-
-            if (tokenViewModel.AccessToken is null)
-            {
-                return BadRequest("Incorrect password.");
+                return BadRequest("Wrong User or Password.");
             }
 
             return Ok(tokenViewModel);
@@ -48,8 +47,7 @@ namespace Api.Controllers
         /// </summary>
         /// <param name="logInUser">The user credentials for creating a new account.</param>
         /// <returns>Returns the newly created user information, including a token.</returns>
-        [HttpPost()]
-        [Route("signin")]
+        [HttpPost("signin")]
         [AllowAnonymous]
         [ProducesResponseType(typeof(UserViewModel), 200)]
         [ProducesResponseType(400)]
@@ -72,6 +70,30 @@ namespace Api.Controllers
             return Ok(tokenVM);
         }
 
-        
+        /// <summary>
+        /// Controller endpoint for regenerating a new token based on the provided input model.
+        /// </summary>
+        /// <param name="tokenInput">The input model containing the access and refresh tokens.</param>
+        /// <returns>Returns the regenerated token information.</returns>
+        [HttpPost("regen-token")]
+        [AllowAnonymous]
+        [ProducesResponseType(typeof(Token), 200)]
+        [ProducesResponseType(400)]
+        public async Task<IActionResult> RegenerateToken(TokenInputModel tokenInput)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var tokenView = await _business.RegenarateTokenAsync(tokenInput);
+
+            if (tokenView is null)
+            {
+                return BadRequest("Invalid Token");
+            }
+
+            return Ok(tokenView);
+        }
     }
 }

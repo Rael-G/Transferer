@@ -19,45 +19,49 @@ namespace Api.Business.Implementation
         public async Task<string?> CreateAsync(LogInUser logInUser) =>
             await _repository.CreateAsync(logInUser);
 
-        public async Task<TokenViewModel?> LoginAsync(LogInUser logInUser)
+        public async Task<Token?> LoginAsync(LogInUser logInUser)
         {
             var user = await _repository.GetByNameAsync(logInUser.UserName);
 
             if (user is null)
                 return null;
             
-
-            // Create a PasswordHasher instance to verify the provided password against the stored hash.
             var passwordHasher = new PasswordHasher<User>();
             var result = passwordHasher
                 .VerifyHashedPassword(user, user.PasswordHash, logInUser.Password);
-            
-            TokenViewModel tokenViewModel = new();
 
-            // If the password verification fails, return token view model with null properties.
             if (result != PasswordVerificationResult.Success)
-                return tokenViewModel;
+                return null;
 
-            // If the password verification is successful, generate an authentication token.
             var roles = await _repository.GetRolesAsync(user);
-            var accessToken = TokenService.GenerateAccessToken(user, roles);
-            var refreshToken = TokenService.GenerateRefreshToken();
-            var now = DateTime.UtcNow;
+            var token = TokenService.GenerateToken(user, roles);
 
-            user.RefreshToken = refreshToken;
-            user.RefreshTokenExpiryTime = now.AddDays(TokenService.DaysToExpiry);
-
+            user.RefreshToken = token.RefreshToken;
+            user.RefreshTokenExpiryTime = token.Creation.AddDays(TokenService.DaysToExpiry);
             await _repository.UpdateAsync(user);
 
-            tokenViewModel = new()
-            {
-                AccessToken = accessToken,
-                Creation = now,
-                Expiration = now.AddMinutes(TokenService.MinutesToExpiry),
-                RefreshToken = refreshToken
-            };
+            return token;
+        }
 
-            return tokenViewModel;
+        public async Task<Token?> RegenarateTokenAsync(TokenInputModel tokenInput)
+        {
+            var principal = TokenService.GetPrincipalFromToken(tokenInput.AccessToken);
+
+            var user = await _repository.GetByNameAsync(principal.Identity.Name);
+
+            if (user == null ||
+                user.RefreshToken != tokenInput.RefreshToken ||
+                user.RefreshTokenExpiryTime < DateTime.UtcNow)
+                return null;
+
+            var token = TokenService.GenerateToken(principal.Claims);
+
+            user.RefreshToken = token.RefreshToken;
+            user.RefreshTokenExpiryTime = token.Creation.AddDays(TokenService.DaysToExpiry);
+            
+            await _repository.UpdateAsync(user);
+
+            return token;
         }
     }
 }

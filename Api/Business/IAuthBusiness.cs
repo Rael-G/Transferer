@@ -12,7 +12,7 @@ namespace Api.Business
         /// <returns>
         /// A string containing an error message if the creation fails; otherwise, returns null.
         /// </returns>
-        Task<TokenViewModel?> LoginAsync(LogInUser logInUser);
+        Task<Token?> LoginAsync(LogInUser logInUser);
 
         /// <summary>
         /// Authenticates a user based on the provided login information.
@@ -23,5 +23,14 @@ namespace Api.Business
         /// otherwise, returns null.
         /// </returns>
         Task<string?> CreateAsync(LogInUser logInUser);
+
+        /// <summary>
+        /// Regenerates an authentication token based on the provided expired access token.
+        /// </summary>
+        /// <param name="tokenInput">Token input model containing the expired access token and associated refresh token.</param>
+        /// <returns>
+        /// A new authentication token if regeneration is successful; otherwise, returns null.
+        /// </returns>
+        Task<Token?> RegenarateTokenAsync(TokenInputModel tokenInput);
     }
 }

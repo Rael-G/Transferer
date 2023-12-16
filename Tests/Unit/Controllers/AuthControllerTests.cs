@@ -14,7 +14,7 @@ namespace Tests.Unit.Controllers
         private readonly AuthController _controller;
 
         private readonly LogInUser _logInUser = new("Batatinha", "Batata123!");
-        private readonly TokenViewModel _tokenModel = new() 
+        private readonly Token _tokenModel = new() 
         { AccessToken = Guid.NewGuid().ToString(), RefreshToken = Guid.NewGuid().ToString() };
 
         public AuthControllerTests()
@@ -24,21 +24,10 @@ namespace Tests.Unit.Controllers
         }
 
         [Fact]
-        public async void Login_WhenLogedUserIsNull_ReturnsNotFound()
-        {
-            _business.Setup(b => b.LoginAsync(_logInUser))
-                .ReturnsAsync(() => null);
-
-            var result = await _controller.LogIn(_logInUser);
-
-            result.ShouldBeAssignableTo<NotFoundObjectResult>();
-        }
-
-        [Fact]
         public async void Login_WhenTokenIsNull_ReturnsBadRequest()
         {
             _business.Setup(b => b.LoginAsync(_logInUser))
-            .ReturnsAsync(new TokenViewModel { AccessToken = null });
+            .ReturnsAsync(() => null);
 
             var result = await _controller.LogIn(_logInUser);
 
