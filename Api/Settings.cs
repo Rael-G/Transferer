@@ -118,10 +118,16 @@ namespace Api
         public static void InitializeDb(this WebApplication app)
         {
             using var scope = app.Services.CreateScope();
-            var serviceProvider = scope.ServiceProvider;
+            var services = scope.ServiceProvider;
 
-            var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-            var userManager = serviceProvider.GetRequiredService<UserManager<User>>();
+            var context = services.GetRequiredService<TransfererDbContext>();
+            if (context.Database.GetPendingMigrations().Any())
+            {
+                context.Database.Migrate();
+            }
+
+            var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+            var userManager = services.GetRequiredService<UserManager<User>>();
 
             Seeder.Seed(roleManager, userManager);
         }

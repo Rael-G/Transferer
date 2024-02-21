@@ -16,6 +16,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    //app.InitializeDb();
 }
 
 
@@ -24,7 +25,5 @@ app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-
-app.InitializeDb();
 
 app.Run();
