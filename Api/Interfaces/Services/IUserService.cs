@@ -2,9 +2,9 @@
 using Api.Models.InputModel;
 using System.Security.Claims;
 
-namespace Api.Business
+namespace Api.Interfaces.Services
 {
-    public interface IUserBusiness
+    public interface IUserService
     {
         /// <summary>
         /// Get a user by ID.

@@ -1,9 +1,9 @@
 ﻿using Api.Models.InputModel;
 using Api.Models.ViewModels;
 
-namespace Api.Business
+namespace Api.Interfaces.Services
 {
-    public interface IAuthBusiness
+    public interface IAuthService
     {
         /// <summary>
         /// Creates a new user asynchronously based on the provided login information.

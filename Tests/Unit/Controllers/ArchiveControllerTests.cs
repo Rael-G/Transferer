@@ -13,12 +13,12 @@ namespace Tests.Unit.Controllers
 {
     public class ArchiveControllerTests
     {
-        private readonly Mock<IArchiveBusiness> _business;
+        private readonly Mock<IArchiveService> _business;
         private readonly ArchivesController _controller;
 
         public ArchiveControllerTests()
         {
-            _business = new Mock<IArchiveBusiness>();
+            _business = new Mock<IArchiveService>();
             _controller = new ArchivesController(_business.Object);
         }
 

@@ -1,4 +1,4 @@
-﻿namespace Api.Data.Interfaces
+﻿namespace Api.Interfaces.Repositories
 {
     public interface IFileStorage
     {

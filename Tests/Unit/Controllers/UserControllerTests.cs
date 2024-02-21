@@ -13,7 +13,7 @@ namespace Tests.Unit.Controllers
 {
     public class UserControllerTests
     {
-        private readonly Mock<IUserBusiness> _business;
+        private readonly Mock<IUserService> _business;
         private readonly UsersController _controller;
 
         private User _user;
@@ -21,7 +21,7 @@ namespace Tests.Unit.Controllers
 
         public UserControllerTests()
         {
-            _business = new Mock<IUserBusiness>();
+            _business = new Mock<IUserService>();
             _controller = new UsersController(_business.Object);
 
             _user = new UserBuilder().Build();

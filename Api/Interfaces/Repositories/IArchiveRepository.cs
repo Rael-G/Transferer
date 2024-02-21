@@ -1,6 +1,6 @@
 ﻿using Api.Models;
 
-namespace Api.Data.Interfaces
+namespace Api.Interfaces.Repositories
 {
     public interface IArchiveRepository
     {

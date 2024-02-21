@@ -1,9 +1,9 @@
 ﻿using Api.Business;
-using Api.Business.Implementation;
 using Api.Data.Interfaces;
 using Api.Models;
 using Api.Models.InputModel;
 using Api.Models.ViewModels;
+using Api.Services;
 using Moq;
 using Shouldly;
 using Tests._Builder;
@@ -13,7 +13,7 @@ namespace Tests.Unit.Business
     public class UserBusinessTests
     {
         private Mock<IUserRepository> _repository;
-        private UserBusiness _business;
+        private UserService _business;
 
         private User user;
         private UserViewModel userViewModel;
@@ -22,8 +22,8 @@ namespace Tests.Unit.Business
         public UserBusinessTests() 
         {
             _repository = new Mock<IUserRepository>();
-            var archiveBusiness = new Mock<IArchiveBusiness>();
-            _business = new UserBusiness(_repository.Object, archiveBusiness.Object);
+            var archiveBusiness = new Mock<IArchiveService>();
+            _business = new UserService(_repository.Object, archiveBusiness.Object);
 
             user = new UserBuilder().Build();
             userViewModel = UserViewModel.MapToViewModel(user);
@@ -132,8 +132,8 @@ namespace Tests.Unit.Business
             var archive2 = new ArchiveBuilder().Build();
             user.Archives = new List<Archive> { archive1, archive2 };
 
-            var archiveBusiness = new Mock<IArchiveBusiness>();
-            _business = new UserBusiness(_repository.Object, archiveBusiness.Object);
+            var archiveBusiness = new Mock<IArchiveService>();
+            _business = new UserService(_repository.Object, archiveBusiness.Object);
 
             var result = await _business.RemoveAsync(user.Id);
 

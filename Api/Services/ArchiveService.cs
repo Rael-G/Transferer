@@ -1,17 +1,19 @@
 ﻿using Api.Data.Interfaces;
+using Api.Interfaces.Repositories;
+using Api.Interfaces.Services;
 using Api.Models;
 using System.IO.Compression;
 using System.Security.Claims;
 
-namespace Api.Business.Implementation
+namespace Api.Services
 {
-    public class ArchiveBusiness : IArchiveBusiness
+    public class ArchiveService : IArchiveService
     {
         private readonly IArchiveRepository _archiveRepository;
         private readonly IFileStorage _storage;
         private readonly IUserRepository _userRepository;
 
-        public ArchiveBusiness(IArchiveRepository repository,
+        public ArchiveService(IArchiveRepository repository,
             IFileStorage storage, IUserRepository userRepository)
         {
             _archiveRepository = repository;
@@ -21,7 +23,7 @@ namespace Api.Business.Implementation
 
         public async Task<List<Archive>> GetAllAsync(string userId)
             => await _archiveRepository.GetAllAsync(userId);
-        
+
         public async Task<List<Archive>> GetAllAsync()
             => await _archiveRepository.GetAllAsync();
 
@@ -39,7 +41,10 @@ namespace Api.Business.Implementation
             {
                 var archive = await GetByIdAsync(id, userId);
                 if (archive == null)
-                    missing += id.ToString() + "; ";
+                {
+                    missing = id.ToString();
+                    break;
+                }
                 archives.Add(archive);
             }
 
@@ -85,8 +90,8 @@ namespace Api.Business.Implementation
                     // If the stream is null, the archive is missing, add its name to the missing list.
                     if (stream == null)
                     {
-                        missing += $"{item.FileName}; ";
-                        continue;
+                        missing = item.FileName;
+                        break;
                     }
                     var zipEntry = archive.CreateEntry(item.FileName, CompressionLevel.Optimal);
 

@@ -2,9 +2,9 @@
 using System.Reflection;
 using System.Security.Claims;
 
-namespace Api.Business
+namespace Api.Interfaces.Services
 {
-    public interface IArchiveBusiness
+    public interface IArchiveService
     {
         /// <summary>
         /// Gets all archives for a specific user asynchronously.

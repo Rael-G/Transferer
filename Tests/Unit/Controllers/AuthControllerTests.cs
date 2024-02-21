@@ -10,7 +10,7 @@ namespace Tests.Unit.Controllers
 {
     public class AuthControllerTests
     {
-        private readonly Mock<IAuthBusiness> _business;
+        private readonly Mock<IAuthService> _business;
         private readonly AuthController _controller;
 
         private readonly LogInUser _logInUser = new("Batatinha", "Batata123!");
@@ -19,7 +19,7 @@ namespace Tests.Unit.Controllers
 
         public AuthControllerTests()
         {
-            _business = new Mock<IAuthBusiness>();
+            _business = new Mock<IAuthService>();
             _controller = new AuthController(_business.Object);
         }
 

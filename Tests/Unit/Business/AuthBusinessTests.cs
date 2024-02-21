@@ -1,5 +1,4 @@
 ﻿using Api.Models.InputModel;
-using Api.Business.Implementation;
 using Api.Data.Interfaces;
 using Moq;
 using Shouldly;
@@ -11,14 +10,14 @@ namespace Tests.Unit.Business
     public class AuthBusinessTests
     {
         private Mock<IUserRepository> _repository;
-        private AuthBusiness _business;
+        private AuthService _business;
 
         private LogInUser _logInUser = new LogInUser("batatinha", "Batata123!");
 
         public AuthBusinessTests()
         {
             _repository = new Mock<IUserRepository>();
-            _business = new AuthBusiness(_repository.Object);
+            _business = new AuthService(_repository.Object);
         }
 
         [Fact]

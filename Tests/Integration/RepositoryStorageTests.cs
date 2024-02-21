@@ -19,7 +19,7 @@ namespace Tests.Integration
     {
         private readonly Mock<UserManager<User>> _userManagerMock;
         private readonly ArchivesController _controller;
-        private readonly IArchiveBusiness _archiveBusiness;
+        private readonly IArchiveService _archiveBusiness;
 
         public RepositoryStorageTests()
         {
@@ -37,7 +37,7 @@ namespace Tests.Integration
 
             var userRepository = new UserRepository(_userManagerMock.Object, mockRoleManager.Object);
 
-            _archiveBusiness = new ArchiveBusiness(archiveRepository, fileStorage, userRepository);
+            _archiveBusiness = new ArchiveService(archiveRepository, fileStorage, userRepository);
             _controller = new ArchivesController(_archiveBusiness);
         }
 

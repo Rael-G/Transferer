@@ -1,21 +1,21 @@
 ﻿using Api.Data.Interfaces;
+using Api.Interfaces.Services;
 using Api.Models;
 using Api.Models.InputModel;
 using Api.Models.ViewModels;
-using Api.Services;
 using Microsoft.AspNetCore.Identity;
 
-namespace Api.Business.Implementation
+namespace Api.Services
 {
-    public class AuthBusiness : IAuthBusiness
+    public class AuthService : IAuthService
     {
         private readonly IUserRepository _repository;
 
-        public AuthBusiness(IUserRepository repository)
+        public AuthService(IUserRepository repository)
         {
             _repository = repository;
         }
-        
+
         public async Task<string?> CreateAsync(LogInUser logInUser) =>
             await _repository.CreateAsync(logInUser);
 
@@ -25,7 +25,7 @@ namespace Api.Business.Implementation
 
             if (user is null)
                 return null;
-            
+
             var passwordHasher = new PasswordHasher<User>();
             var result = passwordHasher
                 .VerifyHashedPassword(user, user.PasswordHash, logInUser.Password);
@@ -58,7 +58,7 @@ namespace Api.Business.Implementation
 
             user.RefreshToken = token.RefreshToken;
             user.RefreshTokenExpiryTime = token.Creation.AddDays(TokenService.DaysToExpiry);
-            
+
             await _repository.UpdateAsync(user);
 
             return token;

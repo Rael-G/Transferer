@@ -1,16 +1,17 @@
 ﻿using Api.Data.Interfaces;
+using Api.Interfaces.Services;
 using Api.Models;
 using Api.Models.InputModel;
 using System.Security.Claims;
 
-namespace Api.Business.Implementation
+namespace Api.Services
 {
-    public class UserBusiness : IUserBusiness
+    public class UserService : IUserService
     {
         private readonly IUserRepository _repository;
-        private readonly IArchiveBusiness _archiveBusiness;
+        private readonly IArchiveService _archiveBusiness;
 
-        public UserBusiness(IUserRepository repository, IArchiveBusiness archiveBusiness)
+        public UserService(IUserRepository repository, IArchiveService archiveBusiness)
         {
             _repository = repository;
             _archiveBusiness = archiveBusiness;
@@ -35,7 +36,7 @@ namespace Api.Business.Implementation
 
         public async Task<string?> EditAsync(User user, UserInputModel userInputModel)
         {
-            
+
             var result = await _repository.UpdateAsync(user, userInputModel);
             return result;
         }
@@ -49,7 +50,7 @@ namespace Api.Business.Implementation
             // Delete all user archives.
             foreach (var archive in user.Archives)
                 await _archiveBusiness.DeleteAsync(archive);
-            
+
             await _repository.DeleteAsync(user.Id);
 
             return user;

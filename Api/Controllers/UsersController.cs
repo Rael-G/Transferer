@@ -1,4 +1,4 @@
-﻿using Api.Business;
+﻿using Api.Interfaces.Services;
 using Api.Models.InputModel;
 using Api.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
@@ -11,9 +11,9 @@ namespace Api.Controllers
     [Route("[controller]")]
     public class UsersController : ControllerBase
     {
-        private readonly IUserBusiness _business;
+        private readonly IUserService _business;
 
-        public UsersController(IUserBusiness business)
+        public UsersController(IUserService business)
         {
             _business = business;  
         }

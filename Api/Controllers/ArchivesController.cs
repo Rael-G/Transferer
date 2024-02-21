@@ -1,4 +1,4 @@
-﻿using Api.Business;
+﻿using Api.Interfaces.Services;
 using Api.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,9 +10,9 @@ namespace Api.Controllers
     [Route("[controller]")]
     public class ArchivesController : ControllerBase
     {
-        IArchiveBusiness _business;
+        IArchiveService _business;
 
-        public ArchivesController(IArchiveBusiness business )
+        public ArchivesController(IArchiveService business )
         {
             _business = business;
         }

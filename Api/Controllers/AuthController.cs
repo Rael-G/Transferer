@@ -1,16 +1,16 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Api.Models.InputModel;
-using Api.Business;
 using Api.Models.ViewModels;
+using Api.Interfaces.Services;
 
 namespace Api.Controllers
 {
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly IAuthBusiness _business;
-        public AuthController(IAuthBusiness business)
+        private readonly IAuthService _business;
+        public AuthController(IAuthService business)
         {
             _business = business;
         }

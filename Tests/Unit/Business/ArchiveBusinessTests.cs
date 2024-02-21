@@ -1,6 +1,7 @@
 ﻿using Api.Business;
 using Api.Business.Implementation;
 using Api.Data.Interfaces;
+using Api.Interfaces.Repositories;
 using Api.Models;
 using Microsoft.AspNetCore.Http;
 using Moq;
@@ -15,7 +16,7 @@ namespace Tests.Unit.Business
         private readonly Mock<IArchiveRepository> _archiveRepository;
         private readonly Mock<IFileStorage> _storage;
         private readonly Mock<IUserRepository> _userRepository;
-        private readonly IArchiveBusiness _business;
+        private readonly IArchiveService _business;
 
         private Guid _guid = Guid.NewGuid();
         private string _userId = Guid.NewGuid().ToString();
@@ -29,7 +30,7 @@ namespace Tests.Unit.Business
             _storage = new Mock<IFileStorage>();
             _userRepository = new Mock<IUserRepository>();
 
-            _business = new ArchiveBusiness(_archiveRepository.Object, _storage.Object, _userRepository.Object);
+            _business = new ArchiveService(_archiveRepository.Object, _storage.Object, _userRepository.Object);
         }
 
         [Theory]

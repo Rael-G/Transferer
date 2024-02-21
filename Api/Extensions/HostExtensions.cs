@@ -9,8 +9,8 @@ using Api.Data.Contexts;
 using Api.Services;
 using Microsoft.OpenApi.Models;
 using Api.Models;
-using Api.Business.Implementation;
-using Api.Business;
+using Api.Interfaces.Repositories;
+using Api.Interfaces.Services;
 
 namespace Api.Extensions
 {
@@ -41,10 +41,10 @@ namespace Api.Extensions
                 new LocalFileStorage(filesDirectory));
 
             services.AddScoped<IArchiveRepository, ArchiveRepository>();
-            services.AddScoped<IUserBusiness, UserBusiness>();
+            services.AddScoped<IUserService, UserService>();
             services.AddScoped<IUserRepository, UserRepository>();
-            services.AddScoped<IAuthBusiness, AuthBusiness>();
-            services.AddScoped<IArchiveBusiness, ArchiveBusiness>();
+            services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IArchiveService, ArchiveService>();
         }
 
         public static void ConfigureAuth(this IServiceCollection services)

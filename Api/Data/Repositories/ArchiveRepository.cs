@@ -1,5 +1,5 @@
 ﻿using Api.Data.Contexts;
-using Api.Data.Interfaces;
+using Api.Interfaces.Repositories;
 using Api.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
