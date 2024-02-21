@@ -404,4 +404,3 @@ Api/Storage/Files/*
 todo.txt
 **/Properties/*
 **/appsettings.json
-**/appsettings.Development.json
