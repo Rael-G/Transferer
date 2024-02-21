@@ -23,6 +23,9 @@ services:
     build:
       context: .
       dockerfile: Api/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80; #https://+:443;
     depends_on: 
       - db
     networks:
