@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Api.Services
 {
-    public class Seeder
+    public class SeederService
     {
         public static void RoleSeeder(RoleManager<IdentityRole> roleManager)
         {

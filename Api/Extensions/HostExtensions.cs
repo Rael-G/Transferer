@@ -12,13 +12,13 @@ using Api.Models;
 using Api.Business.Implementation;
 using Api.Business;
 
-namespace Api
+namespace Api.Extensions
 {
-    public static class Settings
+    public static class HostExtensions
     {
         public static void ConfigureAPI(this IServiceCollection services, IConfiguration configuration)
         {
-            TokenService.SecretKey = configuration["Secrets:SecretKey"] 
+            TokenService.SecretKey = configuration["Secrets:SecretKey"]
                 ?? throw new ArgumentNullException("SecretKey", "Secret Key is not defined in appsettings.");
 
             services.AddCors(options => options.AddDefaultPolicy(builder =>
@@ -29,7 +29,7 @@ namespace Api
             }));
             services.AddDbContext<TransfererDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("Postgres")));
-            
+
             var filesDirectory = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
 
             if (!Directory.Exists(filesDirectory))
@@ -129,7 +129,7 @@ namespace Api
             var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
             var userManager = services.GetRequiredService<UserManager<User>>();
 
-            Seeder.Seed(roleManager, userManager);
+            SeederService.Seed(roleManager, userManager);
         }
     }
 }
