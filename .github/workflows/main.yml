@@ -10,7 +10,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4.1.1
     - name: Test
-      run: dotnet test --verbosity normal ./Tests
+      run: dotnet test --verbosity normal ./src/Tests
 
   docker:
     runs-on: ubuntu-latest
@@ -25,7 +25,7 @@ jobs:
       uses: docker/build-push-action@v5.1.0
       with:
         context: .
-        file: ./Api/Dockerfile
+        file: ./src/Api/Dockerfile
         push: true
         Tags: |
           israelgalvan/transferer:latest
