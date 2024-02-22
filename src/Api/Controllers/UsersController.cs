@@ -1,11 +1,9 @@
 ﻿using Api.Models.InputModel;
 using Api.Models.ViewModels;
-using Application.Dtos;
 using Application.Interfaces.Services;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
 
 namespace Api.Controllers
 {
@@ -35,14 +33,12 @@ namespace Api.Controllers
         public async Task<IActionResult> Get(string id)
         {
             if (string.IsNullOrEmpty(id))
-            {
                 return BadRequest(id);
-            }
+
             var user = await _business.GetAsync(id);
             if (user == null)
-            {
                 return NotFound($"user not found. User Id: {id}");
-            }
+
             var userViewModel = UserViewModel.MapToViewModel(user);
             return Ok(userViewModel);
         }
@@ -61,14 +57,12 @@ namespace Api.Controllers
         public async Task<IActionResult> Search(string name)
         {
             if (string.IsNullOrEmpty(name))
-            {
                 return BadRequest(name);
-            }
+
             var user = await _business.SearchAsync(name);
             if (user == null)
-            {
                 return NotFound($"User not found: {name}");
-            }
+
             var userViewModel = UserViewModel.MapToViewModel(user);
 
             return Ok(userViewModel);
@@ -88,26 +82,20 @@ namespace Api.Controllers
         public async Task<IActionResult> Edit(UserInputModel userInput)
         {
             if (!ModelState.IsValid)
-            {
                 return BadRequest(ModelState);
-            }
 
             var claimId = _business.GetUserIdFromClaims(User);
 
             var user = await _business.GetAsync(claimId);
 
             if (user == null)
-            {
                 return NotFound($"User not found. User Id: {claimId}");
-            }
 
-            var userDto = new UserDto { Id = claimId, UserName = userInput.UserName };
+            user.UserName = userInput.UserName;
 
-            var result = await _business.EditAsync(userDto, userInput.OldPassword, userInput.NewPassword);
+            var result = await _business.EditAsync(user, userInput.OldPassword, userInput.NewPassword);
             if (!result.Succeeded) 
-            { 
                 return BadRequest(result);
-            }
 
             return NoContent();
         }
@@ -127,14 +115,11 @@ namespace Api.Controllers
         {
             var claimId = _business.GetUserIdFromClaims(User);
             if (claimId != id && !_business.IsInRole("admin", User))
-            {
                 return Unauthorized();
-            }
+
             var updatedUser = await _business.RemoveAsync(id);
             if (updatedUser == null)
-            {
                 return NotFound($"User not found. User Id: {id}");
-            }
 
             return NoContent();
         }

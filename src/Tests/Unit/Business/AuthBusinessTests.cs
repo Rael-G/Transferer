@@ -15,7 +15,6 @@ namespace Tests.Unit.Business
         private Mock<IUserRepository> _repository;
         private AuthService _business;
         private LogInUser _logInUser = new LogInUser("batatinha", "Batata123!");
-        private string pswd = "Password1!";
 
         private User user;
         private UserDto userDto;
@@ -35,10 +34,10 @@ namespace Tests.Unit.Business
         {
             var msg = "Failed";
             
-            _repository.Setup(r => r.CreateAsync(It.IsAny<User>(), pswd))
+            _repository.Setup(r => r.CreateAsync(It.IsAny<User>(), _logInUser.Password))
                 .ReturnsAsync(msg);
 
-            var result = await _business.CreateAsync(userDto, pswd);
+            var result = await _business.CreateAsync(userDto, _logInUser.Password);
 
             result.ShouldBe(msg);
         }
@@ -46,10 +45,10 @@ namespace Tests.Unit.Business
         [Fact]
         public async void CreateAsync_WhenSuccess_ReturnsNull()
         {
-            _repository.Setup(r => r.CreateAsync(It.IsAny<User>(), pswd))
+            _repository.Setup(r => r.CreateAsync(It.IsAny<User>(), _logInUser.Password))
                 .ReturnsAsync(() => null);
 
-            var result = await _business.CreateAsync(userDto, pswd);
+            var result = await _business.CreateAsync(userDto, _logInUser.Password);
 
             result.ShouldBeNull();
         }
@@ -60,7 +59,7 @@ namespace Tests.Unit.Business
             _repository.Setup(r => r.GetByNameAsync(It.IsAny<string>()))
                 .ReturnsAsync(() => null);
 
-            var result = await _business.LoginAsync(userDto, pswd); 
+            var result = await _business.LoginAsync(userDto, _logInUser.Password); 
             
             result.ShouldBeNull();
         }
@@ -74,7 +73,7 @@ namespace Tests.Unit.Business
             _repository.Setup(r => r.GetByNameAsync(It.IsAny<string>()))
                 .ReturnsAsync(user);
 
-            var result = await _business.LoginAsync(userDto, pswd);
+            var result = await _business.LoginAsync(userDto, _logInUser.Password);
 
             result.ShouldBeNull();
         }
@@ -91,7 +90,7 @@ namespace Tests.Unit.Business
             _repository.Setup(r => r.GetRolesAsync(user))
                 .ReturnsAsync(new List<string>());
 
-            var result = await _business.LoginAsync(userDto, pswd);
+            var result = await _business.LoginAsync(userDto, _logInUser.Password);
 
             result.ShouldNotBeNull();
             result.AccessToken.ShouldNotBeNull();

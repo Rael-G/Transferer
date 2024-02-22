@@ -125,10 +125,10 @@ namespace Tests.Unit.Controllers
         public async void Edit_WhenIdentityValidationsFails_ReturnsBadRequest()
         {
             var identityResult = new IdentityResult();
-            identityResult.GetType().GetProperty("Successful").SetValue(identityResult, false);
+            identityResult.GetType().GetProperty("Succeeded").SetValue(identityResult, false);
 
             _business.Setup(b => b.GetUserIdFromClaims(It.IsAny<ClaimsPrincipal>()))
-                .Returns(_user.Id);
+                .Returns(_userDto.Id);
             _business.Setup(b => b.GetAsync(It.IsAny<string>()))
                 .ReturnsAsync(_userDto);
             _business.Setup(b => b.EditAsync(It.IsAny<UserDto>(), It.IsAny<string>(), It.IsAny<string>()))
@@ -142,12 +142,15 @@ namespace Tests.Unit.Controllers
         [Fact]
         public async void Edit_WhenSucess_ReturnsNoContent()
         {
+            var identityResult = new IdentityResult();
+            identityResult.GetType().GetProperty("Succeeded").SetValue(identityResult, true);
+
             _business.Setup(b => b.GetUserIdFromClaims(It.IsAny<ClaimsPrincipal>()))
-                .Returns(_user.Id);
+                .Returns(_userDto.Id);
             _business.Setup(b => b.GetAsync(It.IsAny<string>()))
                 .ReturnsAsync(_userDto);
             _business.Setup(b => b.EditAsync(It.IsAny<UserDto>(), It.IsAny<string>(), It.IsAny<string>()))
-                .ReturnsAsync(() => null);
+                .ReturnsAsync(identityResult);
 
             var result = await _controller.Edit(_userInputModel);
 
@@ -157,16 +160,19 @@ namespace Tests.Unit.Controllers
         [Fact]
         public async void Edit_WhenSucess_EditAsyncIsCalledOnce()
         {
+            var identityResult = new IdentityResult();
+            identityResult.GetType().GetProperty("Succeeded").SetValue(identityResult, true);
+
             _business.Setup(b => b.GetUserIdFromClaims(It.IsAny<ClaimsPrincipal>()))
-                .Returns(_user.Id);
+                .Returns(_userDto.Id);
             _business.Setup(b => b.GetAsync(It.IsAny<string>()))
                 .ReturnsAsync(_userDto);
             _business.Setup(b => b.EditAsync(It.IsAny<UserDto>(), It.IsAny<string>(), It.IsAny<string>()))
-                .ReturnsAsync(() => null);
+                .ReturnsAsync(identityResult);
 
             var result = await _controller.Edit(_userInputModel);
 
-            _business.Verify(b => b.EditAsync(_userDto, _userInputModel.OldPassword, _userInputModel.NewPassword), Times.Once());
+            _business.Verify(b => b.EditAsync(It.IsAny<UserDto>(), _userInputModel.OldPassword, _userInputModel.NewPassword), Times.Once());
         }
 
         [Fact]

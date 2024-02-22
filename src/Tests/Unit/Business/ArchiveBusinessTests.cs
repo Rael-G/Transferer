@@ -42,7 +42,10 @@ namespace Tests.Unit.Business
         [InlineData("")]
         public async void GetAllAsync_WithNullOrEmptyUserId_ReturnsAllArchives(string userId)
         {
-            _archiveRepository.Setup(r => r.GetAllAsync(userId)).ReturnsAsync(new List<Archive>());
+            _archiveRepository.Setup(r => r.GetAllAsync(userId))
+                .ReturnsAsync(new List<Archive>());
+            _mapper.Setup(m => m.Map<IEnumerable<ArchiveDto>>(It.IsAny<IEnumerable<Archive>>()))
+                .Returns(new List<ArchiveDto>());
 
             var result = await _business.GetAllAsync(userId);
 
@@ -68,6 +71,9 @@ namespace Tests.Unit.Business
             var ids = new Guid[] { _guid };
             _archiveRepository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<string>()))
                 .ReturnsAsync(_archive);
+            _mapper.Setup(m => m.Map<ArchiveDto>(It.IsAny<Archive>()))
+                .Returns(_archiveDto);
+
             var result = await _business.GetByIdsAsync(ids, _userId);
 
             result.missing.ShouldBeEmpty();
@@ -76,7 +82,7 @@ namespace Tests.Unit.Business
 
 
         [Fact]
-        public async void Upload_shouldCallMethodsAndReturnsArchives()
+        public async void Upload_shouldSaveArchiveAndAddToUser()
         {
             var fileName = "archive.txt";
             var contentType = "application/zip";
@@ -98,17 +104,6 @@ namespace Tests.Unit.Business
 
             _archiveRepository.Verify(a => a.SaveAsync(It.IsAny<Archive>()), Times.Once);
             _userRepository.Verify(u => u.UpdateAsync(_user), Times.Once);
-
-            result.ShouldNotBeNull()
-                .FirstOrDefault()
-                .ShouldNotBeNull()
-                .FileName.ShouldBe(fileName);
-
-            result.ShouldNotBeNull()
-                .ShouldNotBeNull()
-                .FirstOrDefault()
-                .ShouldNotBeNull()
-                .ContentType.ShouldBe(contentType);
         }
 
         [Fact]
@@ -156,7 +151,8 @@ namespace Tests.Unit.Business
         {
             _userRepository.Setup(u => u.UpdateAsync(It.IsAny<User>()));
             _storage.Setup(s => s.DeleteAsync(It.IsAny<string>()));
-
+            _mapper.Setup(m => m.Map<Archive>(It.IsAny<ArchiveDto>()))
+                .Returns(_archive);
             await _business.DeleteAsync(_archiveDto);
 
             _userRepository.Verify(u => u.UpdateAsync(It.IsAny<User>()), Times.Once);

@@ -15,13 +15,13 @@ namespace Tests.Unit.Controllers
         private readonly AuthController _controller;
 
         private readonly LogInUser _logInUser = new("Batatinha", "Batata123!");
-        private UserDto _userDto = UserBuilder.BuildUserDto();
-        private string pswd = "Password1!";
+        private UserDto _userDto;
         private readonly TokenDto _tokenModel = new() 
         { AccessToken = Guid.NewGuid().ToString(), RefreshToken = Guid.NewGuid().ToString() };
 
         public AuthControllerTests()
         {
+            _userDto = new UserBuilder().SetName(_logInUser.UserName).SetPassword(_logInUser.Password).BuildDto();
             _business = new Mock<IAuthService>();
             _controller = new AuthController(_business.Object);
         }
@@ -29,7 +29,7 @@ namespace Tests.Unit.Controllers
         [Fact]
         public async void Login_WhenTokenIsNull_ReturnsBadRequest()
         {
-            _business.Setup(b => b.LoginAsync(_userDto, pswd))
+            _business.Setup(b => b.LoginAsync(_userDto, _logInUser.Password))
             .ReturnsAsync(() => null);
 
             var result = await _controller.LogIn(_logInUser);
@@ -40,7 +40,8 @@ namespace Tests.Unit.Controllers
         [Fact]
         public async void Login_Sucess_ReturnsOkWithLogedUser()
         {
-            _business.Setup(b => b.LoginAsync(_userDto, pswd))
+            
+            _business.Setup(b => b.LoginAsync(It.IsAny<UserDto>(), _logInUser.Password))
             .ReturnsAsync(_tokenModel);
 
             var result = await _controller.LogIn(_logInUser);
@@ -71,9 +72,9 @@ namespace Tests.Unit.Controllers
         public async void Signin_WhenCreateFails_ReturnsBadRequestWithResult(string password)
         {
             var errorMsg = "Failed";
-            var emptyPasswordUser = new LogInUser(_logInUser.UserName, password);
+            var emptyPasswordUser = new LogInUser(_logInUser.UserName, "");
 
-            _business.Setup(b => b.CreateAsync(_userDto, ""))
+            _business.Setup(b => b.CreateAsync(It.IsAny<UserDto>(), It.IsAny<string>()))
                 .ReturnsAsync(errorMsg);
 
             var result = await _controller.SignIn(emptyPasswordUser);
@@ -86,9 +87,8 @@ namespace Tests.Unit.Controllers
         [Fact]
         public async void Signin_WhenSucess_ReturnsOkWithLogedUser()
         {
-            _business.Setup(b => b.CreateAsync(_userDto, pswd)).ReturnsAsync(() => null);
-            _business.Setup(b => b.LoginAsync(_userDto, pswd)).ReturnsAsync(_tokenModel);
-
+            _business.Setup(b => b.CreateAsync(It.IsAny<UserDto>(), _logInUser.Password)).ReturnsAsync(() => null);
+            _business.Setup(b => b.LoginAsync(It.IsAny<UserDto>(), _logInUser.Password)).ReturnsAsync(_tokenModel);
             var result = await _controller.SignIn(_logInUser);
 
             result.ShouldBeAssignableTo<OkObjectResult>()

@@ -11,6 +11,9 @@ namespace Api.Models.InputModel
         [DataType(DataType.Password)]
         public string Password { get; set; }
 
+        public LogInUser()
+        { }
+
         public LogInUser(string userName, string password)
         {
             UserName = userName;

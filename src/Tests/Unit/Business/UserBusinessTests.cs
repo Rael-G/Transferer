@@ -15,9 +15,10 @@ namespace Tests.Unit.Business
 {
     public class UserBusinessTests
     {
-        private Mock<IUserRepository> _repository;
-        private IUserService _business;
+        private readonly Mock<IUserRepository> _repository;
+        private readonly IUserService _business;
         private readonly Mock<IArchiveService> _archiveService;
+        private readonly Mock<IMapper>_mapper;
 
         private User user;
         private UserDto userDto;
@@ -28,12 +29,12 @@ namespace Tests.Unit.Business
         {
             _repository = new Mock<IUserRepository>();
             _archiveService = new Mock<IArchiveService>();
-            var mapper = new Mock<IMapper>();
-            _business = new UserService(_repository.Object, _archiveService.Object, mapper.Object);
+            _mapper = new Mock<IMapper>();
+            _business = new UserService(_repository.Object, _archiveService.Object, _mapper.Object);
 
             user = new UserBuilder().Build();
             userDto = new UserBuilder().BuildDto();
-            userViewModel = UserViewModel.MapToViewModel(user);
+            userViewModel = UserViewModel.MapToViewModel(userDto);
             userInputModel = new UserInputModel(user.UserName, "Batatinha1!", "Batatinha1!");
         }
 
@@ -55,6 +56,8 @@ namespace Tests.Unit.Business
         {
             _repository.Setup(r => r.GetByIdAsync(user.Id))
                 .ReturnsAsync(user);
+            _mapper.Setup(m => m.Map<UserDto>(user))
+                .Returns(userDto);
 
             var result = await _business.GetAsync(user.Id);
 
@@ -79,6 +82,8 @@ namespace Tests.Unit.Business
         {
             var name = "Joaosinho77";
 
+            _mapper.Setup(m => m.Map<UserDto>(user))
+                .Returns(userDto);
             _repository.Setup(r => r.GetByNameAsync(name))
                 .ReturnsAsync(user);
 
@@ -90,6 +95,8 @@ namespace Tests.Unit.Business
         [Fact]
         public async void EditAsync_WhenSuccess_UpdateAsyncIsCalledOnce()
         {
+            _repository.Setup(r => r.GetByIdAsync(It.IsAny<string>()))
+                .ReturnsAsync(user);
             var result = await _business.EditAsync(userDto, userInputModel.OldPassword, userInputModel.NewPassword);
 
             _repository.Verify(r => r.UpdateAsync(It.IsAny<User>(), userInputModel.OldPassword, userInputModel.NewPassword), Times.Once);
@@ -100,9 +107,13 @@ namespace Tests.Unit.Business
         public async void EditAsync_WhenUpdateFails_ReturnsUnsuccessfulResult()
         {
             var identityResult = new IdentityResult();
-            identityResult.GetType().GetProperty("Successful").SetValue(identityResult, false);
+            identityResult.GetType().GetProperty("Succeeded")
+                .SetValue(identityResult, false);
 
-            _repository.Setup(r => r.UpdateAsync(user, userInputModel.OldPassword, userInputModel.NewPassword)).ReturnsAsync(identityResult);
+            _repository.Setup(r => r.UpdateAsync(user, userInputModel.OldPassword, userInputModel.NewPassword))
+                .ReturnsAsync(identityResult);
+            _repository.Setup(r => r.GetByIdAsync(It.IsAny<string>()))
+                .ReturnsAsync(user);
 
             var result = await _business.EditAsync(userDto, userInputModel.OldPassword, userInputModel.NewPassword);
 
