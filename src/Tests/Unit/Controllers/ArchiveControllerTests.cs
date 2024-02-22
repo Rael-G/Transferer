@@ -1,7 +1,7 @@
-﻿using Api.Business;
-using Api.Controllers;
-using Api.Models;
+﻿using Api.Controllers;
 using Api.Models.ViewModels;
+using Application.Dtos;
+using Application.Interfaces.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
@@ -26,7 +26,7 @@ namespace Tests.Unit.Controllers
         public async Task List_ReturnsOkWithArchives()
         {
             var userId = Guid.NewGuid().ToString();
-            var archives = ArchiveBuilder.BuildArchives(10);
+            var archives = ArchiveBuilder.BuildArchivesDto(10);
             _business.Setup(b => b.GetUserIdFromClaims(It.IsAny<ClaimsPrincipal>())).Returns(userId);
             _business.Setup(b => b.GetAllAsync(userId)).ReturnsAsync(archives);
 
@@ -43,7 +43,7 @@ namespace Tests.Unit.Controllers
         [Fact]
         public async Task ListAll_ReturnsOkWithArchives()
         {
-            var archives = ArchiveBuilder.BuildArchives(10);
+            var archives = ArchiveBuilder.BuildArchivesDto(10);
             _business.Setup(b => b.GetAllAsync()).ReturnsAsync(archives);
 
             var result = await _controller.ListAll();
@@ -58,7 +58,7 @@ namespace Tests.Unit.Controllers
         [Fact]
         public async Task ListAll_WhenNoArchives_ReturnsOkWithEmptyList()
         {
-            var emptyArchives = new List<Archive>();
+            var emptyArchives = new List<ArchiveDto>();
             _business.Setup(b => b.GetAllAsync()).ReturnsAsync(emptyArchives);
 
             var result = await _controller.ListAll();
@@ -83,7 +83,7 @@ namespace Tests.Unit.Controllers
         [Fact]
         public async Task Search_WhenNameIsValid_ReturnsOkWithArchives()
         {
-            var archives = ArchiveBuilder.BuildArchives(10);
+            var archives = ArchiveBuilder.BuildArchivesDto(10);
             var names = "picture";
             _business.Setup(b => b.GetByNameAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(archives);
 
@@ -108,7 +108,7 @@ namespace Tests.Unit.Controllers
         [Fact]
         public async Task Download_WhenStreamIsNotInStorage_ReturnsNotFound()
         {
-            Archive archive = new ArchiveBuilder().Build();
+            ArchiveDto archive = new ArchiveBuilder().BuildDto();
 
             _business.Setup(b => b.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<string>())).ReturnsAsync(archive);
 
@@ -122,7 +122,7 @@ namespace Tests.Unit.Controllers
         [Fact]
         public async Task Download_WhenArchiveIsInRepositoryAndStreamIsInStorage_ReturnsFileStream()
         {
-            Archive archive = new ArchiveBuilder().Build();
+            ArchiveDto archive = new ArchiveBuilder().BuildDto();
             Stream stream = new MemoryStream();
 
             _business.Setup(b => b.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<string>()))
@@ -139,7 +139,7 @@ namespace Tests.Unit.Controllers
         public async Task DownloadZip_WhenArchivesAreNotInRepository_ReturnsNotFoundWithIds()
         {
             Guid[] idArray = new Guid[] { Guid.NewGuid() };
-            List<Archive> archives = new();
+            List<ArchiveDto> archives = new();
             var missing = "arquivo1; arquivo2;";
 
             _business.Setup(b => b.GetByIdsAsync(It.IsAny<Guid[]>(), It.IsAny<string>()))
@@ -157,12 +157,12 @@ namespace Tests.Unit.Controllers
             var bytes = Array.Empty<byte>();
             var msg = "archive1; archive2";
 
-            List<Archive> archives = ArchiveBuilder.BuildArchives(1);
+            List<ArchiveDto> archives = ArchiveBuilder.BuildArchivesDto(1);
 
             _business.Setup(b => b.GetByIdsAsync(It.IsAny<Guid[]>(), It.IsAny<string>()))
                     .ReturnsAsync((archives, ""));
 
-            _business.Setup(b => b.DownloadMultipleAsync(It.IsAny<List<Archive>>()))
+            _business.Setup(b => b.DownloadMultipleAsync(It.IsAny<List<ArchiveDto>>()))
                     .ReturnsAsync((bytes, msg));
 
             IActionResult result = await _controller.DownloadZip(id);
@@ -174,13 +174,13 @@ namespace Tests.Unit.Controllers
         public async Task DownloadZip_WhenArchivesAreInRepositoryAndStreamsAreInStorage_ReturnsFileStreamResult()
         {
             Guid[] ids = new Guid[] { Guid.NewGuid() };
-            List<Archive> archives = ArchiveBuilder.BuildArchives(4);
+            List<ArchiveDto> archives = ArchiveBuilder.BuildArchivesDto(4);
             byte[] downloadZip = new byte[] { 255, 0, 255, 0, 255 };
 
             _business.Setup(b => b.GetByIdsAsync(It.IsAny<Guid[]>(), It.IsAny<string>()))
                     .ReturnsAsync((archives, ""));
 
-            _business.Setup(b => b.DownloadMultipleAsync(It.IsAny<List<Archive>>()))
+            _business.Setup(b => b.DownloadMultipleAsync(It.IsAny<List<ArchiveDto>>()))
                     .ReturnsAsync((downloadZip, ""));
 
             IActionResult result = await _controller.DownloadZip(ids);
@@ -205,7 +205,7 @@ namespace Tests.Unit.Controllers
             {
                 new FormFile(new MemoryStream(new byte[]{ }), 0, 0, "", "")
             };
-            var archives = ArchiveBuilder.BuildArchives(6);
+            var archives = ArchiveBuilder.BuildArchivesDto(6);
 
             _business.Setup(b => b.UploadAsync(It.IsAny<IEnumerable<IFormFile>>(), It.IsAny<string>()))
                     .ReturnsAsync(archives);
@@ -219,7 +219,7 @@ namespace Tests.Unit.Controllers
         public async Task Delete_WhenArchiveIsNotInRepository_ReturnsNotFound()
         {
             Guid id = Guid.NewGuid();
-            Archive? nullArchive = null;
+            ArchiveDto? nullArchive = null;
 
             _business.Setup(b => b.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<string>()))
                 .ReturnsAsync(nullArchive);
@@ -233,7 +233,7 @@ namespace Tests.Unit.Controllers
         public async Task Delete_WhenArchiveIsInRepository_ReturnsNoContent()
         {
             Guid id = Guid.NewGuid();
-            Archive? archive = new ArchiveBuilder().Build();
+            ArchiveDto? archive = new ArchiveBuilder().BuildDto();
 
             _business.Setup(b => b.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<string>()))
                 .ReturnsAsync(archive);
@@ -245,7 +245,7 @@ namespace Tests.Unit.Controllers
 
         //Auxiliary methods start here
 
-        private void VerifyListAllResult(IActionResult result, List<Archive> archives)
+        private void VerifyListAllResult(IActionResult result, List<ArchiveDto> archives)
         {
             // Verify that the GetAllAsync method of the business was called once
             _business.Verify(b => b.GetAllAsync(), Times.Once);
@@ -276,7 +276,7 @@ namespace Tests.Unit.Controllers
             }
         }
 
-        private void VerifySearchResult(IActionResult result, List<Archive> archives)
+        private void VerifySearchResult(IActionResult result, List<ArchiveDto> archives)
         {
             // Verify that the GetByNameAsync method of the business was called once
             _business.Verify(b => b.GetByNameAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
@@ -301,7 +301,7 @@ namespace Tests.Unit.Controllers
             resultValue.Count.ShouldBe(archives.Count);
         }
 
-        private void VerifyDownloadResult(IActionResult result, Archive archive, Stream expectedStream)
+        private void VerifyDownloadResult(IActionResult result, ArchiveDto archive, Stream expectedStream)
         {
             // Verify that GetByIdAsync and DownloadAsync methods were called once each
             _business.Verify(b => b.GetByIdAsync(archive.Id, It.IsAny<string>()), Times.Once);
@@ -333,7 +333,7 @@ namespace Tests.Unit.Controllers
         {
             // Verify that GetByIdsAsync and DownloadMultipleAsync methods were called once each
             _business.Verify(b => b.GetByIdsAsync(It.IsAny<Guid[]>(), It.IsAny<string>()), Times.Once);
-            _business.Verify(b => b.DownloadMultipleAsync(It.IsAny<List<Archive>>()), Times.Once);
+            _business.Verify(b => b.DownloadMultipleAsync(It.IsAny<List<ArchiveDto>>()), Times.Once);
 
             // Assert that the result is not null, is of type FileContentResult, and its FileContents property matches the expected file contents
             result.ShouldNotBeNull()
@@ -341,7 +341,7 @@ namespace Tests.Unit.Controllers
                   .FileContents.ShouldBe(expectedFileContents);
         }
 
-        private void VerifyUploadOkResult(IActionResult result, List<Archive> expectedArchives)
+        private void VerifyUploadOkResult(IActionResult result, List<ArchiveDto> expectedArchives)
         {
             // Verify that UploadAsync method was called once
             _business.Verify(b => b.UploadAsync(It.IsAny<IEnumerable<IFormFile>>(), It.IsAny<string>()), Times.Once);

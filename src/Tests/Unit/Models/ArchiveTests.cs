@@ -1,5 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
-using Api.Models;
+﻿using Domain.Entities;
+using System.ComponentModel.DataAnnotations;
 using Tests._Builder;
 
 namespace Tests.Unit.Models

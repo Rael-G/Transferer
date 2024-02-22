@@ -1,9 +1,12 @@
-﻿using Api.Business;
-using Api.Data.Interfaces;
-using Api.Models;
-using Api.Models.InputModel;
+﻿using Api.Models.InputModel;
 using Api.Models.ViewModels;
-using Api.Services;
+using Application.Dtos;
+using Application.Interfaces.Services;
+using Application.Services;
+using AutoMapper;
+using Domain.Entities;
+using Domain.Interfaces.Repositories;
+using Microsoft.AspNetCore.Identity;
 using Moq;
 using Shouldly;
 using Tests._Builder;
@@ -13,19 +16,23 @@ namespace Tests.Unit.Business
     public class UserBusinessTests
     {
         private Mock<IUserRepository> _repository;
-        private UserService _business;
+        private IUserService _business;
+        private readonly Mock<IArchiveService> _archiveService;
 
         private User user;
+        private UserDto userDto;
         private UserViewModel userViewModel;
         UserInputModel userInputModel;
 
         public UserBusinessTests() 
         {
             _repository = new Mock<IUserRepository>();
-            var archiveBusiness = new Mock<IArchiveService>();
-            _business = new UserService(_repository.Object, archiveBusiness.Object);
+            _archiveService = new Mock<IArchiveService>();
+            var mapper = new Mock<IMapper>();
+            _business = new UserService(_repository.Object, _archiveService.Object, mapper.Object);
 
             user = new UserBuilder().Build();
+            userDto = new UserBuilder().BuildDto();
             userViewModel = UserViewModel.MapToViewModel(user);
             userInputModel = new UserInputModel(user.UserName, "Batatinha1!", "Batatinha1!");
         }
@@ -51,7 +58,7 @@ namespace Tests.Unit.Business
 
             var result = await _business.GetAsync(user.Id);
 
-            result.ShouldBe(user);
+            result.Id.ShouldBe(user.Id);
         }
 
         [Fact]
@@ -77,28 +84,30 @@ namespace Tests.Unit.Business
 
             var result = await _business.SearchAsync(name);
 
-            result.ShouldBe(user);
+            result.Id.ShouldBe(user.Id);
         }
 
         [Fact]
         public async void EditAsync_WhenSuccess_UpdateAsyncIsCalledOnce()
         {
-            var result = await _business.EditAsync(user, userInputModel);
+            var result = await _business.EditAsync(userDto, userInputModel.OldPassword, userInputModel.NewPassword);
 
-            _repository.Verify(r => r.UpdateAsync(user, userInputModel), Times.Once);
+            _repository.Verify(r => r.UpdateAsync(It.IsAny<User>(), userInputModel.OldPassword, userInputModel.NewPassword), Times.Once);
             result.ShouldBeNull();
         }
 
         [Fact]
-        public async void EditAsync_WhenUpdateFails_ReturnsErrorMessage()
+        public async void EditAsync_WhenUpdateFails_ReturnsUnsuccessfulResult()
         {
-            var errorMsg = "Update failed";
-            _repository.Setup(r => r.UpdateAsync(user, userInputModel)).ReturnsAsync(errorMsg);
+            var identityResult = new IdentityResult();
+            identityResult.GetType().GetProperty("Successful").SetValue(identityResult, false);
 
-            var result = await _business.EditAsync(user, userInputModel);
+            _repository.Setup(r => r.UpdateAsync(user, userInputModel.OldPassword, userInputModel.NewPassword)).ReturnsAsync(identityResult);
 
-            _repository.Verify(r => r.UpdateAsync(user, userInputModel), Times.Once);
-            result.ShouldBe(errorMsg);
+            var result = await _business.EditAsync(userDto, userInputModel.OldPassword, userInputModel.NewPassword);
+
+            _repository.Verify(r => r.UpdateAsync(It.IsAny<User>(), userInputModel.OldPassword, userInputModel.NewPassword), Times.Once);
+            result.Succeeded.ShouldBeFalse();
         }
 
         [Fact]
@@ -128,17 +137,11 @@ namespace Tests.Unit.Business
         {
             _repository.Setup(r => r.GetByIdAsync(user.Id)).ReturnsAsync(user);
 
-            var archive1 = new ArchiveBuilder().Build();
-            var archive2 = new ArchiveBuilder().Build();
-            user.Archives = new List<Archive> { archive1, archive2 };
-
-            var archiveBusiness = new Mock<IArchiveService>();
-            _business = new UserService(_repository.Object, archiveBusiness.Object);
+            user.Archives = ArchiveBuilder.BuildArchives(10);
 
             var result = await _business.RemoveAsync(user.Id);
 
-            archiveBusiness.Verify(a => a.DeleteAsync(archive1), Times.Once);
-            archiveBusiness.Verify(a => a.DeleteAsync(archive2), Times.Once);
+            _archiveService.Verify(a => a.DeleteAsync(It.IsAny<ArchiveDto>()), Times.Exactly(10));
         }
     }
 }

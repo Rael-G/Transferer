@@ -1,8 +1,10 @@
-﻿using Api.Business;
-using Api.Controllers;
-using Api.Models;
+﻿using Api.Controllers;
 using Api.Models.InputModel;
 using Api.Models.ViewModels;
+using Application.Dtos;
+using Application.Interfaces.Services;
+using Domain.Entities;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Shouldly;
@@ -17,6 +19,7 @@ namespace Tests.Unit.Controllers
         private readonly UsersController _controller;
 
         private User _user;
+        private UserDto _userDto;
         private UserInputModel _userInputModel;
 
         public UserControllerTests()
@@ -25,6 +28,7 @@ namespace Tests.Unit.Controllers
             _controller = new UsersController(_business.Object);
 
             _user = new UserBuilder().Build();
+            _userDto = new UserBuilder().BuildDto();
             _userInputModel = new UserInputModel(_user.UserName, "Batatinha1!", "Batatinha1!");
         }
 
@@ -54,15 +58,15 @@ namespace Tests.Unit.Controllers
         [Fact]
         public async void Get_IfFound_ReturnsOkWithUserViewModel()
         {
-            _business.Setup(b => b.GetAsync(It.IsAny<string>())).ReturnsAsync(_user);
+            _business.Setup(b => b.GetAsync(It.IsAny<string>())).ReturnsAsync(_userDto);
 
-            var result = await _controller.Get(_user.Id);
+            var result = await _controller.Get(_userDto.Id);
 
             result.ShouldBeAssignableTo<OkObjectResult>()
                 .ShouldNotBeNull()
                 .Value.ShouldBeAssignableTo<UserViewModel>()
                 .ShouldNotBeNull()
-                .Id.ShouldBe(_user.Id);
+                .Id.ShouldBe(_userDto.Id);
         }
 
         [Theory]
@@ -91,9 +95,9 @@ namespace Tests.Unit.Controllers
         [Fact]
         public async void Search_IfFound_ReturnsOkWithUserViewModel()
         {
-            _business.Setup(b => b.SearchAsync(It.IsAny<string>())).ReturnsAsync(_user);
+            _business.Setup(b => b.SearchAsync(It.IsAny<string>())).ReturnsAsync(_userDto);
 
-            var result = await _controller.Search(_user.UserName);
+            var result = await _controller.Search(_userDto.UserName);
 
             result.ShouldBeAssignableTo<OkObjectResult>()
                 .ShouldNotBeNull()
@@ -101,7 +105,7 @@ namespace Tests.Unit.Controllers
                 .ShouldNotBeNull()
                 .ShouldBeAssignableTo<UserViewModel>()
                 .ShouldNotBeNull()
-                .Id.ShouldBe(_user.Id);
+                .Id.ShouldBe(_userDto.Id);
         }
 
         [Fact]
@@ -109,7 +113,7 @@ namespace Tests.Unit.Controllers
         {
             _business.Setup(b => b.GetUserIdFromClaims(It.IsAny<ClaimsPrincipal>()))
                 .Returns(_user.Id);
-            _business.Setup(b => b.EditAsync(It.IsAny<User>(), It.IsAny<UserInputModel>()))
+            _business.Setup(b => b.EditAsync(It.IsAny<UserDto>(), It.IsAny<string>(), It.IsAny<string>()))
                 .ReturnsAsync(() => null);
 
             var result = await _controller.Edit(_userInputModel);
@@ -120,20 +124,19 @@ namespace Tests.Unit.Controllers
         [Fact]
         public async void Edit_WhenIdentityValidationsFails_ReturnsBadRequest()
         {
-            var msg = "fail";
+            var identityResult = new IdentityResult();
+            identityResult.GetType().GetProperty("Successful").SetValue(identityResult, false);
 
             _business.Setup(b => b.GetUserIdFromClaims(It.IsAny<ClaimsPrincipal>()))
                 .Returns(_user.Id);
             _business.Setup(b => b.GetAsync(It.IsAny<string>()))
-                .ReturnsAsync(_user);
-            _business.Setup(b => b.EditAsync(It.IsAny<User>(), It.IsAny<UserInputModel>()))
-                .ReturnsAsync(msg);
+                .ReturnsAsync(_userDto);
+            _business.Setup(b => b.EditAsync(It.IsAny<UserDto>(), It.IsAny<string>(), It.IsAny<string>()))
+                .ReturnsAsync(identityResult);
 
             var result = await _controller.Edit(_userInputModel);
 
-            result.ShouldBeAssignableTo<BadRequestObjectResult>()
-                .ShouldNotBeNull()
-                .Value.ShouldBe(msg);
+            result.ShouldBeAssignableTo<BadRequestObjectResult>();
         }
 
         [Fact]
@@ -142,8 +145,8 @@ namespace Tests.Unit.Controllers
             _business.Setup(b => b.GetUserIdFromClaims(It.IsAny<ClaimsPrincipal>()))
                 .Returns(_user.Id);
             _business.Setup(b => b.GetAsync(It.IsAny<string>()))
-                .ReturnsAsync(_user);
-            _business.Setup(b => b.EditAsync(It.IsAny<User>(), It.IsAny<UserInputModel>()))
+                .ReturnsAsync(_userDto);
+            _business.Setup(b => b.EditAsync(It.IsAny<UserDto>(), It.IsAny<string>(), It.IsAny<string>()))
                 .ReturnsAsync(() => null);
 
             var result = await _controller.Edit(_userInputModel);
@@ -157,13 +160,13 @@ namespace Tests.Unit.Controllers
             _business.Setup(b => b.GetUserIdFromClaims(It.IsAny<ClaimsPrincipal>()))
                 .Returns(_user.Id);
             _business.Setup(b => b.GetAsync(It.IsAny<string>()))
-                .ReturnsAsync(_user);
-            _business.Setup(b => b.EditAsync(It.IsAny<User>(), It.IsAny<UserInputModel>()))
+                .ReturnsAsync(_userDto);
+            _business.Setup(b => b.EditAsync(It.IsAny<UserDto>(), It.IsAny<string>(), It.IsAny<string>()))
                 .ReturnsAsync(() => null);
 
             var result = await _controller.Edit(_userInputModel);
 
-            _business.Verify(b => b.EditAsync(_user, _userInputModel), Times.Once());
+            _business.Verify(b => b.EditAsync(_userDto, _userInputModel.OldPassword, _userInputModel.NewPassword), Times.Once());
         }
 
         [Fact]
@@ -185,7 +188,7 @@ namespace Tests.Unit.Controllers
             _business.Setup(b => b.GetUserIdFromClaims(It.IsAny<ClaimsPrincipal>()))
                 .Returns(_user.Id);
             _business.Setup(b => b.RemoveAsync(It.IsAny<string>()))
-                .ReturnsAsync(_user);
+                .ReturnsAsync(_userDto);
 
             var result = await _controller.Remove(_user.Id);
 
@@ -198,7 +201,7 @@ namespace Tests.Unit.Controllers
             _business.Setup(b => b.GetUserIdFromClaims(It.IsAny<ClaimsPrincipal>()))
                 .Returns(_user.Id);
             _business.Setup(b => b.RemoveAsync(It.IsAny<string>()))
-                .ReturnsAsync(_user);
+                .ReturnsAsync(_userDto);
 
             var result = await _controller.Remove(_user.Id);
 
@@ -221,7 +224,7 @@ namespace Tests.Unit.Controllers
         {
             _business.Setup(b => b.IsInRole("admin", It.IsAny<ClaimsPrincipal>())).Returns(true);
             _business.Setup(b => b.RemoveAsync(It.IsAny<string>()))
-                .ReturnsAsync(_user);
+                .ReturnsAsync(_userDto);
 
             var result = await _controller.Remove(Guid.NewGuid().ToString());
 

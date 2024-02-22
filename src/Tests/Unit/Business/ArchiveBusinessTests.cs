@@ -1,8 +1,9 @@
-﻿using Api.Business;
-using Api.Business.Implementation;
-using Api.Data.Interfaces;
-using Api.Interfaces.Repositories;
-using Api.Models;
+﻿using Application.Dtos;
+using Application.Interfaces.Services;
+using Application.Services;
+using AutoMapper;
+using Domain.Entities;
+using Domain.Interfaces.Repositories;
 using Microsoft.AspNetCore.Http;
 using Moq;
 using Shouldly;
@@ -15,12 +16,14 @@ namespace Tests.Unit.Business
     {
         private readonly Mock<IArchiveRepository> _archiveRepository;
         private readonly Mock<IFileStorage> _storage;
+        private readonly Mock<IMapper> _mapper;
         private readonly Mock<IUserRepository> _userRepository;
         private readonly IArchiveService _business;
 
         private Guid _guid = Guid.NewGuid();
         private string _userId = Guid.NewGuid().ToString();
         private Archive _archive = new ArchiveBuilder().Build();
+        private ArchiveDto _archiveDto = new ArchiveBuilder().BuildDto();
         private User _user = new UserBuilder().Build();
         private string _path = new Guid().ToString();
 
@@ -29,8 +32,9 @@ namespace Tests.Unit.Business
             _archiveRepository = new Mock<IArchiveRepository>();
             _storage = new Mock<IFileStorage>();
             _userRepository = new Mock<IUserRepository>();
+            _mapper = new Mock<IMapper>();
 
-            _business = new ArchiveService(_archiveRepository.Object, _storage.Object, _userRepository.Object);
+            _business = new ArchiveService(_archiveRepository.Object, _storage.Object, _userRepository.Object, _mapper.Object);
         }
 
         [Theory]
@@ -67,7 +71,7 @@ namespace Tests.Unit.Business
             var result = await _business.GetByIdsAsync(ids, _userId);
 
             result.missing.ShouldBeEmpty();
-            result.archives.ShouldContain(_archive);
+            result.archives.ShouldContain(a => a.Id == _archive.Id);
         }
 
 
@@ -112,7 +116,7 @@ namespace Tests.Unit.Business
         {
             _storage.Setup(s => s.GetByPathAsync(It.IsAny<string>())).ReturnsAsync(new MemoryStream());
 
-            var result = await _business.DownloadAsync(_archive);
+            var result = await _business.DownloadAsync(_archiveDto);
 
             result.ShouldNotBeNull().ShouldBeAssignableTo<Stream>();
             _storage.Verify(s => s.GetByPathAsync(It.IsAny<string>()), Times.Once);
@@ -121,8 +125,8 @@ namespace Tests.Unit.Business
         [Fact]
         public async void DownloadMultiple_IfArchivesAreMissing_ReturnsMissingArchivesIdInString()
         {
-            var archive = new ArchiveBuilder().Build();
-            List<Archive> archives = new() { archive };
+            var archive = new ArchiveBuilder().BuildDto();
+            List<ArchiveDto> archives = new() { archive };
             _storage.Setup(s => s.GetByPathAsync(It.IsAny<string>()))
                 .ReturnsAsync(() => null);
 
@@ -136,7 +140,7 @@ namespace Tests.Unit.Business
         public async void DownloadMultiple_IfArchivesAreFound_ReturnsEmptyMissingStringAndZip()
         {
             var stream = new MemoryStream();
-            var archives = ArchiveBuilder.BuildArchives(1);
+            var archives = ArchiveBuilder.BuildArchivesDto(1);
 
             _storage.Setup(r => r.GetByPathAsync(It.IsAny<string>()))
                 .ReturnsAsync(stream);
@@ -153,7 +157,7 @@ namespace Tests.Unit.Business
             _userRepository.Setup(u => u.UpdateAsync(It.IsAny<User>()));
             _storage.Setup(s => s.DeleteAsync(It.IsAny<string>()));
 
-            await _business.DeleteAsync(_archive);
+            await _business.DeleteAsync(_archiveDto);
 
             _userRepository.Verify(u => u.UpdateAsync(It.IsAny<User>()), Times.Once);
             _storage.Verify(s => s.DeleteAsync(It.IsAny<string>()), Times.Once);

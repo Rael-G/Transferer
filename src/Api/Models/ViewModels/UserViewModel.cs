@@ -1,5 +1,4 @@
 ﻿using Application.Dtos;
-using System.Text.Json.Serialization;
 
 namespace Api.Models.ViewModels
 {

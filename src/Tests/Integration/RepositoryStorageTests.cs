@@ -1,10 +1,12 @@
-﻿using Api.Business;
-using Api.Business.Implementation;
-using Api.Controllers;
+﻿using Api.Controllers;
 using Api.Data.Contexts;
 using Api.Data.Repositories;
-using Api.Models;
 using Api.Models.ViewModels;
+using Application.Interfaces.Services;
+using Application.Mappings;
+using Application.Services;
+using AutoMapper;
+using Domain.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -20,6 +22,7 @@ namespace Tests.Integration
         private readonly Mock<UserManager<User>> _userManagerMock;
         private readonly ArchivesController _controller;
         private readonly IArchiveService _archiveBusiness;
+        private readonly IMapper _mapper;
 
         public RepositoryStorageTests()
         {
@@ -37,7 +40,12 @@ namespace Tests.Integration
 
             var userRepository = new UserRepository(_userManagerMock.Object, mockRoleManager.Object);
 
-            _archiveBusiness = new ArchiveService(archiveRepository, fileStorage, userRepository);
+            _mapper = new MapperConfiguration(cfg =>
+            {
+                cfg.AddProfile<DomainToDto>();
+            }).CreateMapper();
+
+            _archiveBusiness = new ArchiveService(archiveRepository, fileStorage, userRepository, _mapper);
             _controller = new ArchivesController(_archiveBusiness);
         }
 

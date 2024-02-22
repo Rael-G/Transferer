@@ -1,5 +1,8 @@
 ﻿using Api.Models;
+using Application.Dtos;
 using Bogus;
+using Domain.Entities;
+using Microsoft.AspNetCore.Identity;
 using System.Reflection;
 
 namespace Tests._Builder
@@ -82,6 +85,17 @@ namespace Tests._Builder
             return archives;
         }
 
+        public static List<ArchiveDto> BuildArchivesDto(int num)
+        {
+            List<ArchiveDto> archives = new();
+            for (int i = 0; i < num; i++)
+            {
+                archives.Add(new ArchiveBuilder().BuildDto());
+            }
+
+            return archives;
+        }
+
         private Archive SetIdField(Archive archive)
         {
             
@@ -90,5 +104,25 @@ namespace Tests._Builder
             field?.SetValue(archive, _id);
             return archive;
         }
+
+        private ArchiveDto SetIdField(ArchiveDto archive)
+        {
+
+            FieldInfo? field = typeof(ArchiveDto).GetField("id");
+
+            field?.SetValue(archive, _id);
+            return archive;
+        }
+
+        public ArchiveDto BuildDto()
+        {
+            var archive = new ArchiveDto { FileName = _fileName, ContentType =_contentType, Length = _length, Path = _path, User = _user };
+            if (_id != null)
+            {
+                archive = SetIdField(archive);
+            }
+            return archive;
+        }
+
     }
 }

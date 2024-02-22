@@ -4,21 +4,21 @@ namespace Application.Dtos
 {
     public class ArchiveDto
     {
-        public Guid Id { get; private set; }
+        public Guid Id { get; set; }
 
-        public string? FileName { get; private set; }
+        public string? FileName { get; set; }
 
-        public string? ContentType { get; private set; }
+        public string? ContentType { get; set; }
 
-        public long? Length { get; private set; }
+        public long? Length { get; set; }
 
-        public string? Path { get; private set; }
+        public string? Path { get; set; }
 
-        public DateTime? UploadDate { get; private set; }
+        public DateTime? UploadDate { get; set; }
 
-        public string? UserId { get; private set; }
+        public string? UserId { get; set; }
 
-        public User? User { get; private set; }
+        public User? User { get; set; }
 
         public ArchiveDto()
         {

@@ -1,5 +1,7 @@
 ﻿using Api.Models;
+using Application.Dtos;
 using Bogus;
+using Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 
 namespace Tests._Builder
@@ -53,6 +55,21 @@ namespace Tests._Builder
             return user;
         }
 
+        public UserDto BuildDto()
+        {
+            UserDto user = new UserDto()
+            {
+                Id = _id,
+                UserName = _userName
+            };
+
+            var passwordHasher = new PasswordHasher<UserDto>();
+            var hashedPassword = passwordHasher.HashPassword(user, _password);
+            user.PasswordHash = hashedPassword;
+
+            return user;
+        }
+
         public static User BuildUser()
         {
 
@@ -68,6 +85,30 @@ namespace Tests._Builder
             }
 
             return users;
+        }
+
+        public static UserDto BuildUserDto()
+        {
+
+            return new UserBuilder().BuildDto();
+        }
+
+        public static List<UserDto> BuildUserDto(int num)
+        {
+            List<UserDto> users = new();
+            for (int i = 0; i < num; i++)
+            {
+                users.Add(new UserBuilder().BuildDto());
+            }
+
+            return users;
+        }
+
+        public static (User user, UserDto userDto) BuildBoth()
+        {
+            var ub = new UserBuilder();
+
+            return (ub.Build(), ub.BuildDto());
         }
     }
 }
