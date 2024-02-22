@@ -22,7 +22,7 @@ services:
     - 8080:80
     build:
       context: .
-      dockerfile: Api/Dockerfile
+      dockerfile: src/Api/Dockerfile
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:80; #https://+:443;
