@@ -149,10 +149,11 @@ namespace Tests.Unit.Business
         [Fact]
         public async void DeleteAsync_RemovesArchiveFromUserAndDeletesFile()
         {
-            _userRepository.Setup(u => u.UpdateAsync(It.IsAny<User>()));
-            _storage.Setup(s => s.DeleteAsync(It.IsAny<string>()));
-            _mapper.Setup(m => m.Map<Archive>(It.IsAny<ArchiveDto>()))
-                .Returns(_archive);
+            //_mapper.Setup(m => m.Map<Archive>(It.IsAny<ArchiveDto>()))
+            //    .Returns(_archive);
+            _archiveRepository.Setup(ar => ar.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<string>()))
+                .ReturnsAsync(_archive);
+
             await _business.DeleteAsync(_archiveDto);
 
             _userRepository.Verify(u => u.UpdateAsync(It.IsAny<User>()), Times.Once);

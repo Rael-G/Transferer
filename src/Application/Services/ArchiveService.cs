@@ -114,7 +114,7 @@ namespace Application.Services
         public async Task DeleteAsync(ArchiveDto archiveDto)
         {
             var user = archiveDto.User;
-            var archive = _mapper.Map<Archive>(archiveDto);
+            var archive = await _archiveRepository.GetByIdAsync(archiveDto.Id, archiveDto.UserId);
             user.Archives.Remove(archive);
 
             await _userRepository.UpdateAsync(user);
