@@ -1,0 +1,25 @@
+﻿using Microsoft.AspNetCore.Identity;
+using System.Text.Json.Serialization;
+
+namespace Domain.Entities
+{
+    public class User : IdentityUser
+    {
+        [JsonIgnore]
+        public List<Archive> Archives { get; set; }
+
+        public string? RefreshToken { get; set; }
+
+        public DateTime? RefreshTokenExpiryTime { get; set; }
+
+        public User() : base()
+        {
+            Archives = new List<Archive>();
+        }
+
+        public User(List<Archive> archives) : base()
+        {
+            Archives = archives;
+        }
+    }
+}
