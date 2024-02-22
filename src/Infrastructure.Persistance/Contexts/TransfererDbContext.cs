@@ -18,6 +18,14 @@ namespace Api.Data.Contexts
             modelBuilder.Entity<Archive>(a =>
             {
                 a.HasKey(a => a.Id);
+                a.Property(a => a.FileName).IsRequired();
+                a.Property(a => a.ContentType).IsRequired();
+                a.Property(a => a.Length).IsRequired();
+                a.Property(a => a.Path).IsRequired();
+                a.Property(a => a.UploadDate).IsRequired();
+                a.Property(a => a.UserId).IsRequired();
+                a.HasIndex(a => a.FileName).IsUnique();
+                a.HasKey(a => a.Id);
                 a.HasOne(a => a.User)
                 .WithMany(u => u.Archives)
                 .HasForeignKey(a => a.UserId);

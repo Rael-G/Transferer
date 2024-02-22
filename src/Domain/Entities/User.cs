@@ -1,11 +1,9 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using System.Text.Json.Serialization;
 
 namespace Domain.Entities
 {
     public class User : IdentityUser
     {
-        [JsonIgnore]
         public List<Archive> Archives { get; set; }
 
         public string? RefreshToken { get; set; }
@@ -14,12 +12,12 @@ namespace Domain.Entities
 
         public User() : base()
         {
-            Archives = new List<Archive>();
+            Archives = [];
         }
 
-        public User(List<Archive> archives) : base()
+        public User(IEnumerable<Archive> archives) : base()
         {
-            Archives = archives;
+            Archives = archives.ToList();
         }
     }
 }

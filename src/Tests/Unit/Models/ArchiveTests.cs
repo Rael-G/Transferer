@@ -15,7 +15,7 @@ namespace Tests.Unit.Models
             string path = ".\\documents\\arquivo.txt";
             User user = new User();
 
-            Archive archive = new(name, type, length, path, user);
+            Archive archive = new Archive(name, type, length, path, user);
 
             Assert.Equal(name, archive.FileName);
             Assert.Equal(type, archive.ContentType);
@@ -32,10 +32,17 @@ namespace Tests.Unit.Models
         {
             Archive archive = new ArchiveBuilder().SetFileName(invalidName).Build();
 
-            var results = new List<ValidationResult>();
-            var isValid = Validator.TryValidateObject(archive, new ValidationContext(archive), results, true);
+            Assert.False(archive.IsFileNameValid());
+        }
 
-            Assert.False(isValid);
+        [Theory]
+        [InlineData("archive")]
+        [InlineData("archiveName.txt")]
+        public void FilledFileName_IsValid(string validName)
+        {
+            Archive archive = new ArchiveBuilder().SetFileName(validName).Build();
+
+            Assert.True(archive.IsFileNameValid());
         }
 
         [Theory]
@@ -46,23 +53,35 @@ namespace Tests.Unit.Models
         {
             Archive archive = new ArchiveBuilder().SetContentType(invalidType).Build();
 
-            var results = new List<ValidationResult>();
-            var isValid = Validator.TryValidateObject(archive, new ValidationContext(archive), results, true);
+            Assert.False(archive.IsContentTypeValid());
+        }
 
-            Assert.False(isValid);
+        [Fact]
+        public void FilledContentType_IsValid()
+        {
+            Archive archive = new ArchiveBuilder().Build();
+
+            Assert.True(archive.IsContentTypeValid());
         }
 
         [Theory]
         [InlineData(0)]
-        [InlineData(30000001)]
-        public void LengthZeroOrTooBig_IsInvalid(long invalidLength)
+        [InlineData(-100)]
+        public void LengthLessThanOne_IsInvalid(long invalidLength)
         {
             Archive archive = new ArchiveBuilder().SetLength(invalidLength).Build();
 
-            var results = new List<ValidationResult>();
-            var isValid = Validator.TryValidateObject(archive, new ValidationContext(archive), results, true);
+            Assert.False(archive.IsLengthValid());
+        }
 
-            Assert.False(isValid);
+        [Theory]
+        [InlineData(1)]
+        [InlineData(100)]
+        public void LengthGreaterThanOne_IsValid(long validLength)
+        {
+            Archive archive = new ArchiveBuilder().SetLength(validLength).Build();
+
+            Assert.True(archive.IsLengthValid());
         }
 
         [Theory]
@@ -73,10 +92,17 @@ namespace Tests.Unit.Models
         {
             Archive archive = new ArchiveBuilder().SetPath(invalidPath).Build();
 
-            var results = new List<ValidationResult>();
-            var isValid = Validator.TryValidateObject(archive, new ValidationContext(archive), results, true);
+            Assert.False(archive.IsPathValid());
+        }
 
-            Assert.False(isValid);
+        [Theory]
+        [InlineData(".")]
+        [InlineData("/home/user/archive.txt")]
+        public void FilledPath_IsInvalid(string validPath)
+        {
+            Archive archive = new ArchiveBuilder().SetPath(validPath).Build();
+
+            Assert.True(archive.IsPathValid());
         }
 
         [Fact]
